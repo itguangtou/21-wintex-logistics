@@ -85,5 +85,3 @@ export const DEFAULT_ABOUT_CONTENT: AboutPageContent = {
     ],
   },
 };
-
-export const ABOUT_DRAFT_KEY = 'aboutPageDraft';
