@@ -30,6 +30,7 @@ export default function ImageReplaceField({
       const fd = new FormData();
       fd.set('file', file);
       fd.set('slot', slot);
+      if (value) fd.set('previousUrl', value);
       const res = await fetch('/api/upload', {
         method: 'POST',
         credentials: 'include',

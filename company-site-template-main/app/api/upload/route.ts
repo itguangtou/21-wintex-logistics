@@ -15,8 +15,18 @@ const ALLOWED_MIME: Record<string, string> = {
   'image/gif': '.gif',
 };
 
-/** slot 如 pages/mission/card-0 —— 同 slot 再传即覆盖 */
+/** slot 如 pages/mission/card-0 —— 同 slot 再传即覆盖，不堆积 */
 const SLOT_RE = /^[a-z0-9]+(?:\/[a-z0-9_-]+)+$/i;
+
+function noStoreJson(body: unknown, init?: { status?: number }) {
+  return NextResponse.json(body, {
+    status: init?.status ?? 200,
+    headers: {
+      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      Pragma: 'no-cache',
+    },
+  });
+}
 
 async function ensureMediaBucket() {
   const supabase = getSupabaseAdmin();
@@ -34,7 +44,23 @@ async function ensureMediaBucket() {
   }
 }
 
-/** 删除同一 slot 下其它扩展名文件，保证替换制 */
+/** 从公开 URL 解析出本桶内的对象路径；非本桶则返回 null */
+function storagePathFromPublicUrl(raw: string): string | null {
+  const trimmed = (raw || '').trim();
+  if (!trimmed) return null;
+  try {
+    const u = new URL(trimmed, 'https://placeholder.local');
+    const marker = `/storage/v1/object/public/${BUCKET}/`;
+    const idx = u.pathname.indexOf(marker);
+    if (idx === -1) return null;
+    const objectPath = decodeURIComponent(u.pathname.slice(idx + marker.length));
+    return objectPath || null;
+  } catch {
+    return null;
+  }
+}
+
+/** 删除同一 slot 下其它扩展名文件（如先传 .png 再传 .jpg） */
 async function removeOtherSlotFiles(slot: string, keepPath: string) {
   const supabase = getSupabaseAdmin();
   const dir = slot.includes('/') ? slot.slice(0, slot.lastIndexOf('/')) : '';
@@ -58,37 +84,43 @@ async function removeOtherSlotFiles(slot: string, keepPath: string) {
   }
 }
 
+/** 若旧图也在本桶且路径不同于新文件，则删除，防止换路径后堆积 */
+async function removePreviousStorageObject(previousUrl: string, keepPath: string) {
+  const oldPath = storagePathFromPublicUrl(previousUrl);
+  if (!oldPath || oldPath === keepPath) return;
+  const supabase = getSupabaseAdmin();
+  await supabase.storage.from(BUCKET).remove([oldPath]);
+}
+
 export async function POST(req: NextRequest) {
   try {
     await requireAdminSession();
     if (!hasSupabaseConfig()) {
-      return NextResponse.json({ error: '未配置 Supabase' }, { status: 503 });
+      return noStoreJson({ error: '未配置 Supabase' }, { status: 503 });
     }
 
     const form = await req.formData();
     const file = form.get('file');
     const slotRaw = String(form.get('slot') || '').trim();
+    const previousUrl = String(form.get('previousUrl') || '').trim();
 
     if (!slotRaw || !SLOT_RE.test(slotRaw)) {
-      return NextResponse.json(
+      return noStoreJson(
         { error: 'slot 无效，应为如 pages/mission/card-0' },
         { status: 400 }
       );
     }
     if (!(file instanceof File)) {
-      return NextResponse.json({ error: '缺少文件 file' }, { status: 400 });
+      return noStoreJson({ error: '缺少文件 file' }, { status: 400 });
     }
     if (file.size <= 0 || file.size > MAX_BYTES) {
-      return NextResponse.json({ error: '图片大小需在 1B～8MB' }, { status: 400 });
+      return noStoreJson({ error: '图片大小需在 1B～8MB' }, { status: 400 });
     }
 
     const mime = (file.type || '').toLowerCase();
     const ext = ALLOWED_MIME[mime];
     if (!ext) {
-      return NextResponse.json(
-        { error: '仅支持 JPEG / PNG / WebP / GIF' },
-        { status: 400 }
-      );
+      return noStoreJson({ error: '仅支持 JPEG / PNG / WebP / GIF' }, { status: 400 });
     }
 
     await ensureMediaBucket();
@@ -97,30 +129,35 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const supabase = getSupabaseAdmin();
 
+    // 同路径 upsert = 覆盖，不会多出一张
     const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, buffer, {
       contentType: mime,
       upsert: true,
       cacheControl: '3600',
     });
     if (upErr) {
-      return NextResponse.json({ error: upErr.message }, { status: 500 });
+      return noStoreJson({ error: upErr.message }, { status: 500 });
     }
 
     await removeOtherSlotFiles(slotRaw, path);
+    if (previousUrl) {
+      await removePreviousStorageObject(previousUrl, path);
+    }
 
     const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
     const url = `${pub.publicUrl}?v=${Date.now()}`;
 
-    return NextResponse.json({
+    return noStoreJson({
       ok: true,
       url,
       path,
       slot: slotRaw,
       mime,
       size: file.size,
+      replaced: true,
     });
   } catch (e: any) {
     const status = e?.status === 401 ? 401 : 500;
-    return NextResponse.json({ error: e?.message || '上传失败' }, { status });
+    return noStoreJson({ error: e?.message || '上传失败' }, { status });
   }
 }
