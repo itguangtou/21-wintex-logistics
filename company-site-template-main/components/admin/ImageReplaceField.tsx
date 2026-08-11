@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useAdminAuth } from './AdminAuthContext';
+import { compressImageForUpload } from '@/lib/compressImageForUpload';
 
 type ImageReplaceFieldProps = {
   label?: string;
@@ -27,8 +28,9 @@ export default function ImageReplaceField({
     setUploading(true);
     setError(null);
     try {
+      const compressed = await compressImageForUpload(file);
       const fd = new FormData();
-      fd.set('file', file);
+      fd.set('file', compressed);
       fd.set('slot', slot);
       if (value) fd.set('previousUrl', value);
       const res = await fetch('/api/upload', {
@@ -41,7 +43,10 @@ export default function ImageReplaceField({
         await logout();
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
-      if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
+      if (res.status === 413) {
+        throw new Error('图片过大（服务器限制约 4.5MB），请换较小的图');
+      }
+      if (!res.ok) throw new Error(j?.error || `上传失败（HTTP ${res.status}）`);
       if (!j?.url) throw new Error('未返回图片地址');
       onChange(String(j.url));
     } catch (e: unknown) {
@@ -72,7 +77,7 @@ export default function ImageReplaceField({
               onClick={() => inputRef.current?.click()}
               className="px-3 py-2 rounded-lg bg-[#0E2745] text-white text-sm hover:bg-[#163a5f] disabled:opacity-50"
             >
-              {uploading ? '上传中…' : value ? '选择图片替换' : '选择图片上传'}
+              {uploading ? '压缩并上传中…' : value ? '选择图片替换' : '选择图片上传'}
             </button>
             <input
               ref={inputRef}
@@ -82,7 +87,9 @@ export default function ImageReplaceField({
               onChange={(e) => void onPick(e.target.files?.[0])}
             />
           </div>
-          <p className="text-xs text-gray-500">本地选择一张图即可替换当前图（JPEG / PNG / WebP / GIF，≤8MB）</p>
+          <p className="text-xs text-gray-500">
+            选图后会先在本地压成 WebP（长边≤1920）再上传；同槽覆盖旧文件，不会堆积。
+          </p>
           {error && <span className="text-sm text-red-600">{error}</span>}
         </div>
       </div>
