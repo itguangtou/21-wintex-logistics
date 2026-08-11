@@ -1,0 +1,1 @@
+export const posts=[{slug:'hello-world',title:'网站上线啦',date:'2025-08-01',excerpt:'我们发布了新网站。',content:'<p>欢迎访问！</p>'}] as const;

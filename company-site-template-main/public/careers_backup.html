@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wintex Logistics Corporation - 物流人才招聘</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #1a4b75;
+            --secondary: #2c5b8a;
+            --accent: #4dabf7;
+            --accent2: #2ecc71;
+            --light: #f8f9fa;
+            --dark: #0d2b46;
+            --text: #333;
+            --text-light: #666;
+        }
+        
+        body {
+            font-family: 'Noto Sans SC', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #f0f7ff 0%, #e6f7ff 100%);
+            color: var(--text);
+            line-height: 1.6;
+            position: relative;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-bottom: 150px;
+        }
+        
+        /* 语言切换按钮 */
+        .language-switcher {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .lang-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 15px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .lang-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
+        header {
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 50px 20px 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            margin-bottom: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" preserveAspectRatio="none"><path d="M0,0 L100,0 L100,100 Z" fill="rgba(255,255,255,0.08)"/></svg>');
+            background-size: cover;
+        }
+        
+        .header-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .tagline {
+            font-size: 1.4rem;
+            color: #a8d1ff;
+            margin-bottom: 25px;
+            font-weight: 300;
+        }
+        
+        .job-tabs {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.15);
+            border: none;
+            color: white;
+            padding: 15px 35px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            min-width: 180px;
+            text-align: center;
+        }
+        
+        .tab-btn.active {
+            background: var(--accent2);
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.4);
+        }
+        
+        .tab-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.25);
+        }
+        
+        .job-content {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .job-content.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .job-highlights {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .highlight {
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            min-width: 200px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+        
+        .highlight:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+        }
+        
+        .highlight i {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: var(--accent);
+        }
+        
+        .highlight h3 {
+            font-size: 1.3rem;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+        
+        .highlight p {
+            font-size: 1.1rem;
+            color: var(--text-light);
+        }
+        
+        .salary-highlight {
+            background: linear-gradient(135deg, #ffd166 0%, #ff9e00 100%);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 30px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            margin: 15px 0;
+            box-shadow: 0 4px 10px rgba(255, 158, 0, 0.3);
+        }
+        
+        .btn-contact {
+            display: inline-block;
+            background: linear-gradient(90deg, var(--accent2) 0%, #27ae60 100%);
+            color: white;
+            padding: 15px 35px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            text-decoration: none;
+            margin: 25px 0;
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.4);
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .btn-contact:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px rgba(39, 174, 96, 0.6);
+        }
+        
+        .btn-contact i {
+            margin-right: 10px;
+        }
+        
+        .job-details {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            flex: 1;
+            min-width: 300px;
+            transition: transform 0.3s ease;
+            position: relative;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card h2 {
+            color: var(--primary);
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 15px;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .card h2 i {
+            margin-right: 12px;
+            color: var(--accent2);
+        }
+        
+        .card ul {
+            list-style-type: none;
+            padding-left: 5px;
+        }
+        
+        .card li {
+            margin-bottom: 15px;
+            padding-left: 30px;
+            position: relative;
+            font-size: 1.1rem;
+            color: var(--text);
+        }
+        
+        .card li:before {
+            content: "•";
+            color: var(--accent);
+            font-size: 1.8rem;
+            position: absolute;
+            left: 0;
+            top: -5px;
+        }
+        
+        .sub-list {
+            margin-top: 8px;
+            padding-left: 20px;
+        }
+        
+        .sub-list li {
+            font-size: 1rem;
+            color: var(--text-light);
+            padding-left: 20px;
+        }
+        
+        .sub-list li:before {
+            content: "›";
+            color: var(--accent2);
+            top: -2px;
+        }
+        
+        .why-join {
+            background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 40px 0;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+            color: white;
+        }
+        
+        .why-join h2 {
+            text-align: center;
+            font-size: 2.2rem;
+            margin-bottom: 30px;
+            color: white;
+        }
+        
+        .benefits {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+        }
+        
+        .benefit-card {
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            padding: 25px;
+            text-align: center;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            transition: all 0.3s ease;
+        }
+        
+        .benefit-card:hover {
+            transform: scale(1.03);
+        }
+        
+        .benefit-card i {
+            font-size: 3rem;
+            color: var(--accent);
+            margin-bottom: 20px;
+        }
+        
+        .benefit-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--accent2);
+        }
+        
+        .benefit-card p {
+            font-size: 1.1rem;
+            color: #e0f0ff;
+        }
+        
+        .work-environment {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin: 40px 0;
+        }
+        
+        .env-card {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .env-img {
+            height: 200px;
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .env-content {
+            padding: 20px;
+        }
+        
+        .env-content h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--text-light);
+            font-size: 1.1rem;
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: white;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .footer-logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+        
+        .contact-info {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+        }
+        
+        .contact-item i {
+            color: var(--accent);
+            font-size: 1.3rem;
+        }
+        
+        .bilingual {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .bilingual p {
+            flex: 1;
+            padding: 10px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 8px;
+        }
+        
+        .bilingual p:first-child {
+            border-right: 2px solid var(--accent);
+        }
+        
+        @media (max-width: 768px) {
+            .job-details {
+                flex-direction: column;
+            }
+            
+            .job-highlights {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .bilingual {
+                flex-direction: column;
+            }
+            
+            .bilingual p:first-child {
+                border-right: none;
+                border-bottom: 2px solid var(--accent);
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .tagline {
+                font-size: 1.2rem;
+            }
+            
+            .tab-btn {
+                padding: 12px 20px;
+                font-size: 1rem;
+                min-width: 140px;
+            }
+            
+            .contact-info {
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            .language-switcher {
+                position: relative;
+                top: 0;
+                right: 0;
+                text-align: center;
+                margin: 15px 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 语言切换 -->
+        <div class="language-switcher">
+            <button class="lang-btn" id="langCN">中文</button>
+            <button class="lang-btn" id="langEN">English</button>
+        </div>
+        
+        <header>
+            <div class="header-content">
+                <h1 id="main-title">物流人才招聘</h1>
+                <p class="tagline" id="sub-title">加入Wintex，共同打造菲律宾清洁能源未来</p>
+                
+                <div class="job-tabs">
+                    <button class="tab-btn active" data-tab="business" id="business-tab">商务助理</button>
+                    <button class="tab-btn" data-tab="translator" id="translator-tab">现场翻译</button>
+                    <button class="tab-btn" data-tab="freight" id="freight-tab">货代操作</button>
+                </div>
+                
+                <div class="job-highlights">
+                    <div class="highlight">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <h3 id="location-title">工作地点</h3>
+                        <p id="location-desc">菲律宾项目现场</p>
+                    </div>
+                    
+                    <div class="highlight">
+                        <i class="fas fa-handshake"></i>
+                        <h3 id="contract-title">合同类型</h3>
+                        <p id="contract-desc">长期项目制</p>
+                    </div>
+                    
+                    <div class="highlight">
+                        <i class="fas fa-calendar-alt"></i>
+                        <h3 id="status-title">招聘状态</h3>
+                        <p id="status-desc">火热进行中</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- 商务助理职位内容 -->
+        <div class="job-content active" id="business-content">            
+            <div class="job-details">
+                <div class="card">
+                    <h2><i class="fas fa-tasks"></i> <span id="responsibility-title">核心职责</span></h2>
+                    <ul>
+                        <li>
+                            <strong id="subcontractor-title">工程分包商管理</strong>
+                            <ul class="sub-list">
+                                <li id="subcontractor-desc">起草/监管7类分包合同：船务代理、码头操作、拖轮公司、吊装租赁、道路改造、电力迁改、林木修剪</li>
+                                <li id="payment-desc">审核分包商账单，管控付款进度（单项目常涉及5+分包商协同）</li>
+                            </ul>
+                        </li>
+                        
+                        <li>
+                            <strong id="epc-title">总包商(EPC)商务对接</strong>
+                            <ul class="sub-list">
+                                <li id="contract-process">依据工程合同条款处理进度款申请、变更签证、履约保函延期</li>
+                                <li id="claim-desc">主导项目索赔：因总包商原因导致的运输延误及物流成本增加的索赔</li>
+                            </ul>
+                        </li>
+                        
+                        <li>
+                            <strong id="cost-title">重型运输成本控制</strong>
+                            <ul class="sub-list">
+                                <li id="cost-monitor">监控特有成本项：桥梁加固费、临时征地费、警车开道费、超限许可证</li>
+                                <li id="report-desc">编制风电项目分标段损益报告（海运/港口/陆运）</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="card">
+                    <h2><i class="fas fa-user-graduate"></i> <span id="requirements-title">职位要求</span></h2>
+                    <ul>
+                        <li>
+                            <strong id="experience-title">经验要求</strong>
+                            <ul class="sub-list">
+                                <li id="exp1">5年以上工程物流/建筑施工企业经验（需参与过大型设备运输项目）</li>
+                                <li id="exp2">3年以上多类型分包商管理经验（同时管理≥3类）</li>
+                                <li id="exp3">≥5次成功向总包商索赔经验（需面试展示证明文件）</li>
+                            </ul>
+                        </li>
+                        
+                        <li>
+                            <strong id="competencies-title">核心能力</strong>
+                            <ul class="sub-list">
+                                <li id="skill1">精通重型运输合同条款设计：滞期费阶梯计价、吊装事故责任界定</li>
+                                <li id="skill2">熟悉菲律宾大件运输法规：DPWH超限许可流程、LGU地方道路使用许可、NGCP线路迁改规范</li>
+                                <li id="skill3">总包商索赔专长：证据链构建、成本计算模型</li>
+                            </ul>
+                        </li>
+                        
+                        <li>
+                            <strong id="other-title">其他要求</strong>
+                            <ul class="sub-list">
+                                <li id="req1">菲律宾籍，能适应项目现场工作环境</li>
+                                <li id="req2">持有有效驾照，能前往不同项目现场</li>
+                                <li id="req3">流利的英语沟通能力</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    
+                    <!-- 工资面议部分 -->
+                    <div class="salary-highlight">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span id="business-salary">薪资待遇：面议</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 现场翻译职位内容 -->
+        <div class="job-content" id="translator-content">
+            <div class="job-details">
+                <div class="card">
+                    <h2><i class="fas fa-language"></i> <span id="duties-title">工作职责</span></h2>
+                    <ul>
+                        <li id="duty1">为中方特种设备操作手提供现场英语口语翻译服务</li>
+                        <li id="duty2">协助操作手与当地工作人员进行日常沟通协调</li>
+                        <li id="duty3">翻译设备操作手册、安全规范等技术文档</li>
+                        <li id="duty4">参与项目会议并提供中英双向翻译支持</li>
+                        <li id="duty5">协助处理中方员工与当地社区的基本沟通</li>
+                        <li id="duty6">记录并整理翻译日志，确保信息准确传递</li>
+                    </ul>
+                    
+                    <h2><i class="fas fa-user-friends"></i> <span id="environment-title">工作环境</span></h2>
+                    <ul>
+                        <li id="env1">菲律宾风电项目现场（马尼拉及周边地区）</li>
+                        <li id="env2">跟随设备操作团队进行户外作业</li>
+                        <li id="env3">需要适应热带气候和项目现场条件</li>
+                        <li id="env4">提供项目现场住宿及餐饮</li>
+                    </ul>
+                </div>
+                
+                <div class="card">
+                    <h2><i class="fas fa-graduation-cap"></i> <span id="position-requirements">职位要求</span></h2>
+                    <ul>
+                        <li>
+                            <strong id="basic-title">基本要求</strong>
+                            <ul class="sub-list">
+                                <li id="basic1">中国籍应届本科毕业生</li>
+                                <li id="basic2">英语相关专业优先（如翻译、英语、国际商务等）</li>
+                                <li id="basic3">大学英语六级600分以上或专四/专八良好以上</li>
+                            </ul>
+                        </li>
+                        
+                        <li>
+                            <strong id="core-title">核心能力</strong>
+                            <ul class="sub-list">
+                                <li id="core1">优秀的中英双语口语表达能力</li>
+                                <li id="core2">快速学习技术术语和专业知识的能力</li>
+                                <li id="core3">良好的跨文化沟通和理解能力</li>
+                            </ul>
+                        </li>
+                        
+                        <li>
+                            <strong id="personal-title">个人素质</strong>
+                            <ul class="sub-list">
+                                <li id="personal1">吃苦耐劳，能适应项目现场环境</li>
+                                <li id="personal2">有耐心，脾气好，能妥善处理压力</li>
+                                <li id="personal3">积极主动，有上进心，学习能力强</li>
+                                <li id="personal4">具备优秀的情绪管理能力</li>
+                                <li id="personal5">良好的团队协作精神</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    
+                    <h2><i class="fas fa-plus-circle"></i> <span id="preferred-title">优先条件</span></h2>
+                    <ul>
+                        <li id="pref1">有机械、工程类知识背景</li>
+                        <li id="pref2">通过CATTI口译三级或以上</li>
+                        <li id="pref3">有海外学习或生活经历</li>
+                        <li id="pref4">掌握基础菲律宾语</li>
+                    </ul>
+                    
+                    <!-- 工资面议部分 -->
+                    <div class="salary-highlight">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span id="translator-salary">薪资待遇：面议</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 货代操作职位内容 -->
+        <div class="job-content" id="freight-content">
+            <div class="job-details">
+                <div class="card">
+                    <h2><i class="fas fa-ship"></i> <span id="freight-duties-title">工作职责</span></h2>
+                    <ul>
+                        <li id="freight-duty1">负责国际货运的全流程操作，包括订舱、报关、单证制作及跟踪</li>
+                        <li id="freight-duty2">协调船公司、港口、仓库等各方资源，确保货物按时安全运输</li>
+                        <li id="freight-duty3">处理进出口货物的报关报检及相关文件准备工作</li>
+                        <li id="freight-duty4">监控货物运输状态，及时处理运输过程中的异常情况</li>
+                        <li id="freight-duty5">与客户保持良好沟通，及时反馈货物运输信息</li>
+                        <li id="freight-duty6">优化货运方案，降低物流成本，提高运输效率</li>
+                    </ul>
+                    
+                    <h2><i class="fas fa-file-invoice"></i> <span id="documents-title">单证处理</span></h2>
+                    <ul>
+                        <li id="doc1">准备和处理提单、发票、装箱单等运输单据</li>
+                        <li id="doc2">确保所有单证符合国际贸易规则和目的国海关要求</li>
+                        <li id="doc3">审核信用证条款，确保单证一致</li>
+                        <li id="doc4">处理进出口报关文件及相关许可证</li>
+                    </ul>
+                </div>
+                
+                <div class="card">
+                    <h2><i class="fas fa-user-tie"></i> <span id="freight-requirements">职位要求</span></h2>
+                    <ul>
+                        <li>
+                            <strong id="experience-req-title">经验要求</strong>
+                            <ul class="sub-list">
+                                <li id="freight-exp1">至少3年以上国际货代公司工作经验</li>
+                                <li id="freight-exp2">熟悉海运、空运及多式联运操作流程</li>
+                                <li id="freight-exp3">有大型设备或风电项目物流经验者优先</li>
+                            </ul>
+                        </li>
+                        
+                        <li>
+                            <strong id="knowledge-title">专业知识</strong>
+                            <ul class="sub-list">
+                                <li id="knowledge1">精通国际贸易术语（Incoterms 2020）</li>
+                                <li id="knowledge2">熟悉国际海运、空运操作流程及相关法规</li>
+                                <li id="knowledge3">了解菲律宾海关进出口政策及清关流程</li>
+                                <li id="knowledge4">掌握主要船公司及航空公司的操作规范</li>
+                            </ul>
+                        </li>
+                        
+                        <li>
+                            <strong id="skills-title">技能要求</strong>
+                            <ul class="sub-list">
+                                <li id="skill-req1">熟练使用物流管理系统（如CargoWise, SAP等）</li>
+                                <li id="skill-req2">精通Office办公软件，特别是Excel高级功能</li>
+                                <li id="skill-req3">出色的多任务处理能力及时间管理能力</li>
+                                <li id="skill-req4">优秀的英语读写能力（CET-6或同等以上）</li>
+                            </ul>
+                        </li>
+                        
+                        <li>
+                            <strong id="additional-title">其他要求</strong>
+                            <ul class="sub-list">
+                                <li id="add-req1">具备高度责任心和抗压能力</li>
+                                <li id="add-req2">良好的沟通协调能力和团队合作精神</li>
+                                <li id="add-req3">能适应快节奏工作环境，处理紧急情况</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    
+                    <!-- 工资面议部分 -->
+                    <div class="salary-highlight">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span id="freight-salary">薪资待遇：面议</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 工作环境展示 -->
+        <div class="work-environment">
+            <div class="env-card">
+                <div class="env-img" style="background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1601053364510-4c8e0c8b9e9e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80');"></div>
+                <div class="env-content">
+                    <h3 id="env-title1">现代化物流中心</h3>
+                    <p id="env-desc1">使用先进物流管理系统，优化全球供应链运作</p>
+                </div>
+            </div>
+            
+            <div class="env-card">
+                <div class="env-img" style="background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80');"></div>
+                <div class="env-content">
+                    <h3 id="env-title2">全球物流网络</h3>
+                    <p id="env-desc2">连接全球港口、机场和陆运枢纽的高效物流网络</p>
+                </div>
+            </div>
+            
+            <div class="env-card">
+                <div class="env-img" style="background: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1601924994987-69e26d50dc26?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80');"></div>
+                <div class="env-content">
+                    <h3 id="env-title3">专业发展平台</h3>
+                    <p id="env-desc3">提供专业培训和职业发展通道，培养物流专家</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="why-join">
+            <h2 id="why-title">为什么加入Wintex？</h2>
+            <div class="benefits">
+                <div class="benefit-card">
+                    <i class="fas fa-globe-asia"></i>
+                    <h3 id="benefit-title1">国际视野</h3>
+                    <p id="benefit-desc1">参与"一带一路"重点项目，拓展国际职业发展空间</p>
+                </div>
+                
+                <div class="benefit-card">
+                    <i class="fas fa-bolt"></i>
+                    <h3 id="benefit-title2">行业前沿</h3>
+                    <p id="benefit-desc2">投身快速发展的可再生能源行业，掌握前沿技术</p>
+                </div>
+                
+                <div class="benefit-card">
+                    <i class="fas fa-chart-line"></i>
+                    <h3 id="benefit-title3">职业发展</h3>
+                    <p id="benefit-desc3">清晰的晋升通道和专业培训体系，助力职业成长</p>
+                </div>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin: 40px 0;">
+            <button class="btn-contact" id="contactBtn">
+                <i class="fas fa-paper-plane"></i> <span id="apply-text">立即提交简历</span>
+            </button>
+        </div>
+        
+        <footer>
+            <div class="footer-logo">Wintex Logistics Corporation</div>
+            <p id="footer-desc">致力于全球可再生能源基础设施建设和物流服务</p>
+            
+            <div class="contact-info">
+                <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    <span>招聘热线: 00639510941210</span>
+                </div>
+                
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>邮箱: wintexlogistics@wintex.com.ph</span>
+                </div>
+                
+                <div class="contact-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span id="location-text">菲律宾马尼拉总部</span>
+                </div>
+            </div>
+            
+            <p>© 2023 Wintex Logistics Corporation <span id="rights-text">版权所有</span></p>
+        </footer>
+    </div>
+    
+    <script>
+        // 语言数据
+        const translations = {
+            cn: {
+                // 通用
+                "main-title": "物流人才招聘",
+                "sub-title": "加入Wintex，共同打造菲律宾清洁能源未来",
+                "business-tab": "商务助理",
+                "translator-tab": "现场翻译",
+                "freight-tab": "货代操作",
+                "location-title": "工作地点",
+                "location-desc": "菲律宾项目现场",
+                "contract-title": "合同类型",
+                "contract-desc": "长期项目制",
+                "status-title": "招聘状态",
+                "status-desc": "火热进行中",
+                "apply-text": "立即提交简历",
+                "rights-text": "版权所有",
+                "business-salary": "薪资待遇：面议",
+                "translator-salary": "薪资待遇：面议",
+                "freight-salary": "薪资待遇：面议",
+                
+                // 商务助理
+                "responsibility-title": "核心职责",
+                "subcontractor-title": "工程分包商管理",
+                "subcontractor-desc": "起草/监管7类分包合同：船务代理、码头操作、拖轮公司、吊装租赁、道路改造、电力迁改、林木修剪",
+                "payment-desc": "审核分包商账单，管控付款进度（单项目常涉及5+分包商协同）",
+                "epc-title": "总包商(EPC)商务对接",
+                "contract-process": "依据工程合同条款处理进度款申请、变更签证、履约保函延期",
+                "claim-desc": "主导项目索赔：因总包商原因导致的运输延误及物流成本增加的索赔",
+                "cost-title": "重型运输成本控制",
+                "cost-monitor": "监控特有成本项：桥梁加固费、临时征地费、警车开道费、超限许可证",
+                "report-desc": "编制风电项目分标段损益报告（海运/港口/陆运）",
+                "requirements-title": "职位要求",
+                "experience-title": "经验要求",
+                "exp1": "5年以上工程物流/建筑施工企业经验（需参与过大型设备运输项目）",
+                "exp2": "3年以上多类型分包商管理经验（同时管理≥3类）",
+                "exp3": "≥5次成功向总包商索赔经验（需面试展示证明文件）",
+                "competencies-title": "核心能力",
+                "skill1": "精通重型运输合同条款设计：滞期费阶梯计价、吊装事故责任界定",
+                "skill2": "熟悉菲律宾大件运输法规：DPWH超限许可流程、LGU地方道路使用许可、NGCP线路迁改规范",
+                "skill3": "总包商索赔专长：证据链构建、成本计算模型",
+                "other-title": "其他要求",
+                "req1": "菲律宾籍，能适应项目现场工作环境",
+                "req2": "持有有效驾照，能前往不同项目现场",
+                "req3": "流利的英语沟通能力",
+                
+                // 现场翻译
+                "duties-title": "工作职责",
+                "duty1": "为中方特种设备操作手提供现场英语口语翻译服务",
+                "duty2": "协助操作手与当地工作人员进行日常沟通协调",
+                "duty3": "翻译设备操作手册、安全规范等技术文档",
+                "duty4": "参与项目会议并提供中英双向翻译支持",
+                "duty5": "协助处理中方员工与当地社区的基本沟通",
+                "duty6": "记录并整理翻译日志，确保信息准确传递",
+                "environment-title": "工作环境",
+                "env1": "菲律宾风电项目现场（马尼拉及周边地区）",
+                "env2": "跟随设备操作团队进行户外作业",
+                "env3": "需要适应热带气候和项目现场条件",
+                "env4": "提供项目现场住宿及餐饮",
+                "position-requirements": "职位要求",
+                "basic-title": "基本要求",
+                "basic1": "中国籍应届本科毕业生",
+                "basic2": "英语相关专业优先（如翻译、英语、国际商务等）",
+                "basic3": "大学英语六级600分以上或专四/专八良好以上",
+                "core-title": "核心能力",
+                "core1": "优秀的中英双语口语表达能力",
+                "core2": "快速学习技术术语和专业知识的能力",
+                "core3": "良好的跨文化沟通和理解能力",
+                "personal-title": "个人素质",
+                "personal1": "吃苦耐劳，能适应项目现场环境",
+                "personal2": "有耐心，脾气好，能妥善处理压力",
+                "personal3": "积极主动，有上进心，学习能力强",
+                "personal4": "具备优秀的情绪管理能力",
+                "personal5": "良好的团队协作精神",
+                "preferred-title": "优先条件",
+                "pref1": "有机械、工程类知识背景",
+                "pref2": "通过CATTI口译三级或以上",
+                "pref3": "有海外学习或生活经历",
+                "pref4": "掌握基础菲律宾语",
+                
+                // 货代操作
+                "freight-duties-title": "工作职责",
+                "freight-duty1": "负责国际货运的全流程操作，包括订舱、报关、单证制作及跟踪",
+                "freight-duty2": "协调船公司、港口、仓库等各方资源，确保货物按时安全运输",
+                "freight-duty3": "处理进出口货物的报关报检及相关文件准备工作",
+                "freight-duty4": "监控货物运输状态，及时处理运输过程中的异常情况",
+                "freight-duty5": "与客户保持良好沟通，及时反馈货物运输信息",
+                "freight-duty6": "优化货运方案，降低物流成本，提高运输效率",
+                "documents-title": "单证处理",
+                "doc1": "准备和处理提单、发票、装箱单等运输单据",
+                "doc2": "确保所有单证符合国际贸易规则和目的国海关要求",
+                "doc3": "审核信用证条款，确保单证一致",
+                "doc4": "处理进出口报关文件及相关许可证",
+                "freight-requirements": "职位要求",
+                "experience-req-title": "经验要求",
+                "freight-exp1": "至少3年以上国际货代公司工作经验",
+                "freight-exp2": "熟悉海运、空运及多式联运操作流程",
+                "freight-exp3": "有大型设备或风电项目物流经验者优先",
+                "knowledge-title": "专业知识",
+                "knowledge1": "精通国际贸易术语（Incoterms 2020）",
+                "knowledge2": "熟悉国际海运、空运操作流程及相关法规",
+                "knowledge3": "了解菲律宾海关进出口政策及清关流程",
+                "knowledge4": "掌握主要船公司及航空公司的操作规范",
+                "skills-title": "技能要求",
+                "skill-req1": "熟练使用物流管理系统（如CargoWise, SAP等）",
+                "skill-req2": "精通Office办公软件，特别是Excel高级功能",
+                "skill-req3": "出色的多任务处理能力及时间管理能力",
+                "skill-req4": "优秀的英语读写能力（CET-6或同等以上）",
+                "additional-title": "其他要求",
+                "add-req1": "具备高度责任心和抗压能力",
+                "add-req2": "良好的沟通协调能力和团队合作精神",
+                "add-req3": "能适应快节奏工作环境，处理紧急情况",
+                
+                // 工作环境
+                "env-title1": "现代化物流中心",
+                "env-desc1": "使用先进物流管理系统，优化全球供应链运作",
+                "env-title2": "全球物流网络",
+                "env-desc2": "连接全球港口、机场和陆运枢纽的高效物流网络",
+                "env-title3": "专业发展平台",
+                "env-desc3": "提供专业培训和职业发展通道，培养物流专家",
+                
+                // 优势
+                "why-title": "为什么加入Wintex？",
+                "benefit-title1": "国际视野",
+                "benefit-desc1": "参与\"一带一路\"重点项目，拓展国际职业发展空间",
+                "benefit-title2": "行业前沿",
+                "benefit-desc2": "投身快速发展的可再生能源行业，掌握前沿技术",
+                "benefit-title3": "职业发展",
+                "benefit-desc3": "清晰的晋升通道和专业培训体系，助力职业成长",
+                
+                // 页脚
+                "footer-desc": "致力于全球可再生能源基础设施建设和物流服务",
+                "location-text": "菲律宾马尼拉总部"
+            },
+            en: {
+                // 通用
+                "main-title": "Logistics Talent Recruitment",
+                "sub-title": "Join Wintex, Build the Future of Clean Energy in the Philippines",
+                "business-tab": "Business Assistant",
+                "translator-tab": "On-site Translator",
+                "freight-tab": "Freight Forwarding Operator",
+                "location-title": "Location",
+                "location-desc": "Project Sites in Philippines",
+                "contract-title": "Contract Type",
+                "contract-desc": "Long-term Project Based",
+                "status-title": "Status",
+                "status-desc": "Now Hiring",
+                "apply-text": "Submit Your Resume",
+                "rights-text": "All Rights Reserved",
+                "business-salary": "Salary: Negotiable",
+                "translator-salary": "Salary: Negotiable",
+                "freight-salary": "Salary: Negotiable",
+                
+                // 商务助理
+                "responsibility-title": "Key Responsibilities",
+                "subcontractor-title": "Subcontractor Management",
+                "subcontractor-desc": "Draft/supervise contracts for 7 types of subcontractors: shipping agency, terminal operations, tugboat services, crane rental, road modification, power line relocation, tree trimming",
+                "payment-desc": "Verify subcontractor invoices and control payment schedules (managing 5+ subcontractors per project)",
+                "epc-title": "EPC Contractor Engagement",
+                "contract-process": "Process progress payment claims, change orders, performance bond extensions under engineering contracts",
+                "claim-desc": "Lead project claims against EPC contractors for delays and cost overruns caused by EPC decisions",
+                "cost-title": "Heavy Transport Cost Control",
+                "cost-monitor": "Monitor specialized costs: bridge reinforcement, temporary land acquisition, police escort fees, oversize permits",
+                "report-desc": "Prepare segmented P&L reports for wind projects (sea/port/land transport)",
+                "requirements-title": "Requirements",
+                "experience-title": "Experience",
+                "exp1": "5+ years in engineering logistics/construction (experience with heavy equipment transport projects required)",
+                "exp2": "3+ years managing multiple subcontractor types (concurrently managing ≥3 types)",
+                "exp3": "≥5 successful claims against EPC contractors (proof required during interview)",
+                "competencies-title": "Core Competencies",
+                "skill1": "Expertise in heavy transport contract clauses: demurrage tiered pricing, crane accident liability allocation",
+                "skill2": "Knowledge of Philippine heavy transport regulations: DPWH oversize permits, LGU road access approvals, NGCP relocation standards",
+                "skill3": "EPC claim specialization: evidence chain development, cost modeling",
+                "other-title": "Other Requirements",
+                "req1": "Filipino national, able to work at project sites",
+                "req2": "Valid driver's license, able to travel to different sites",
+                "req3": "Fluent English communication skills",
+                
+                // 现场翻译
+                "duties-title": "Job Duties",
+                "duty1": "Provide on-site English interpretation for Chinese heavy equipment operators",
+                "duty2": "Assist operators in daily communication with local staff",
+                "duty3": "Translate technical documents such as equipment manuals and safety regulations",
+                "duty4": "Provide bilingual support in project meetings",
+                "duty5": "Assist in basic communication between Chinese staff and local communities",
+                "duty6": "Maintain interpretation logs to ensure accurate information transfer",
+                "environment-title": "Work Environment",
+                "env1": "Wind power project sites in Philippines (Manila and surrounding areas)",
+                "env2": "Field work with equipment operation teams",
+                "env3": "Need to adapt to tropical climate and site conditions",
+                "env4": "On-site accommodation and meals provided",
+                "position-requirements": "Position Requirements",
+                "basic-title": "Basic Requirements",
+                "basic1": "Chinese fresh graduate with bachelor's degree",
+                "basic2": "English-related majors preferred (translation, English, international business, etc.)",
+                "basic3": "CET-6 score ≥600 or TEM-4/8 with good grade",
+                "core-title": "Core Competencies",
+                "core1": "Excellent Chinese-English oral interpretation skills",
+                "core2": "Ability to quickly learn technical terminology and professional knowledge",
+                "core3": "Strong cross-cultural communication and understanding skills",
+                "personal-title": "Personal Qualities",
+                "personal1": "Hardworking, adaptable to project site conditions",
+                "personal2": "Patient, good-tempered, able to handle pressure",
+                "personal3": "Proactive, motivated, fast learner",
+                "personal4": "Excellent emotional management skills",
+                "personal5": "Strong team collaboration spirit",
+                "preferred-title": "Preferred Qualifications",
+                "pref1": "Background in mechanical/engineering knowledge",
+                "pref2": "CATTI Level 3 Interpretation or higher",
+                "pref3": "Overseas study or living experience",
+                "pref4": "Basic Filipino language skills",
+                
+                // 货代操作
+                "freight-duties-title": "Job Duties",
+                "freight-duty1": "Manage end-to-end international freight operations including booking, customs clearance, documentation and tracking",
+                "freight-duty2": "Coordinate with shipping lines, ports, warehouses to ensure timely and safe cargo transportation",
+                "freight-duty3": "Handle customs declaration and inspection for import/export goods",
+                "freight-duty4": "Monitor cargo status and resolve any transportation issues promptly",
+                "freight-duty5": "Maintain good communication with clients and provide shipment updates",
+                "freight-duty6": "Optimize shipping solutions to reduce costs and improve efficiency",
+                "documents-title": "Documentation",
+                "doc1": "Prepare and process shipping documents including BL, invoices, packing lists",
+                "doc2": "Ensure all documents comply with international trade rules and destination customs requirements",
+                "doc3": "Review L/C terms to ensure document consistency",
+                "doc4": "Handle import/export customs documents and related permits",
+                "freight-requirements": "Requirements",
+                "experience-req-title": "Experience",
+                "freight-exp1": "Minimum 3 years experience in international freight forwarding",
+                "freight-exp2": "Familiar with sea, air and multimodal transportation processes",
+                "freight-exp3": "Experience in heavy equipment or wind power logistics preferred",
+                "knowledge-title": "Professional Knowledge",
+                "knowledge1": "Proficient in Incoterms 2020",
+                "knowledge2": "Knowledge of international sea/air transport regulations",
+                "knowledge3": "Understanding of Philippines customs policies and clearance procedures",
+                "knowledge4": "Familiar with major shipping lines and airlines operations",
+                "skills-title": "Skills",
+                "skill-req1": "Proficient in logistics management systems (e.g. CargoWise, SAP)",
+                "skill-req2": "Advanced MS Office skills, especially Excel",
+                "skill-req3": "Excellent multitasking and time management abilities",
+                "skill-req4": "Strong English reading/writing skills (CET-6 or equivalent)",
+                "additional-title": "Additional Requirements",
+                "add-req1": "High sense of responsibility and stress tolerance",
+                "add-req2": "Good communication and teamwork skills",
+                "add-req3": "Ability to work in fast-paced environment and handle emergencies",
+                
+                // 工作环境
+                "env-title1": "Modern Logistics Center",
+                "env-desc1": "Utilizing advanced logistics management systems to optimize global supply chain",
+                "env-title2": "Global Logistics Network",
+                "env-desc2": "Efficient network connecting ports, airports and land hubs worldwide",
+                "env-title3": "Professional Development",
+                "env-desc3": "Training programs and career development paths for logistics specialists",
+                
+                // 优势
+                "why-title": "Why Join Wintex?",
+                "benefit-title1": "Global Perspective",
+                "benefit-desc1": "Participate in Belt and Road key projects, expand international career",
+                "benefit-title2": "Industry Frontier",
+                "benefit-desc2": "Join fast-growing renewable energy industry, master cutting-edge technologies",
+                "benefit-title3": "Career Development",
+                "benefit-desc3": "Clear promotion path and professional training system",
+                
+                // 页脚
+                "footer-desc": "Dedicated to global renewable energy infrastructure and logistics services",
+                "location-text": "Headquarters in Manila, Philippines"
+            }
+        };
+
+        // 当前语言
+        let currentLang = 'cn';
+        let careersData = null;
+
+        // 检测初始语言
+        function detectInitialLanguage() {
+            // 检查URL参数
+            const urlParams = new URLSearchParams(window.location.search);
+            const langParam = urlParams.get('lang');
+            
+            if (langParam === 'en') {
+                return 'en';
+            }
+            
+            // 检查referrer
+            if (document.referrer) {
+                if (document.referrer.includes('/en')) {
+                    return 'en';
+                }
+            }
+            
+            // 默认中文
+            return 'cn';
+        }
+
+        // 加载招聘数据
+        async function loadCareersData() {
+            try {
+                const response = await fetch('/api/careers');
+                careersData = await response.json();
+                updatePageContent();
+            } catch (error) {
+                console.error('Error loading careers data:', error);
+                // 如果API失败，使用默认翻译数据
+                updatePageContent();
+            }
+        }
+
+        // 更新页面内容
+        function updatePageContent() {
+            if (!careersData) return;
+            
+            const langData = translations[currentLang];
+            
+            // 更新职位内容
+            careersData.jobs.forEach((job, index) => {
+                const tabBtn = document.querySelector(`[data-tab="${job.id}"]`);
+                if (tabBtn) {
+                    tabBtn.textContent = job.title[currentLang];
+                }
+                
+                // 更新职位详情
+                const contentDiv = document.getElementById(`${job.id}-content`);
+                if (contentDiv) {
+                    updateJobContent(contentDiv, job, currentLang);
+                }
+            });
+            
+            // 更新联系信息
+            updateContactInfo();
+            
+            // 更新其他翻译内容
+            Object.keys(langData).forEach(key => {
+                const element = document.getElementById(key);
+                if (element && !careersData.jobs.some(job => 
+                    job.id === key.replace('-content', '').replace('-tab', '')
+                )) {
+                    if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                        element.value = langData[key];
+                    } else {
+                        element.textContent = langData[key];
+                    }
+                }
+            });
+        }
+
+        // 更新职位内容
+        function updateJobContent(contentDiv, job, lang) {
+            // 更新职责标题
+            const responsibilityTitle = contentDiv.querySelector('[id$="-title"]');
+            if (responsibilityTitle) {
+                responsibilityTitle.textContent = lang === 'cn' ? '核心职责' : 'Key Responsibilities';
+            }
+            
+            // 更新职位描述
+            const description = contentDiv.querySelector('.card-body p');
+            if (description) {
+                description.textContent = job.description[lang];
+            }
+            
+            // 更新薪资信息
+            const salaryElement = contentDiv.querySelector('.salary-highlight span');
+            if (salaryElement) {
+                salaryElement.textContent = job.salary[lang];
+            }
+        }
+
+        // 更新联系信息
+        function updateContactInfo() {
+            if (!careersData) return;
+            
+            const contactItems = document.querySelectorAll('.contact-item span');
+            contactItems.forEach(item => {
+                if (item.textContent.includes('+63')) {
+                    item.textContent = `招聘热线: ${careersData.contact.phone}`;
+                } else if (item.textContent.includes('@')) {
+                    item.textContent = `邮箱: ${careersData.contact.email}`;
+                } else if (item.textContent.includes('菲律宾') || item.textContent.includes('Philippines')) {
+                    item.textContent = currentLang === 'cn' ? 
+                        careersData.contact.address.cn : 
+                        careersData.contact.address.en;
+                }
+            });
+        }
+
+        // 切换语言函数
+        function switchLanguage(lang) {
+            currentLang = lang;
+            updatePageContent();
+        }
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            // 检测并设置初始语言
+            const initialLang = detectInitialLanguage();
+            currentLang = initialLang;
+            
+            // 加载招聘数据
+            loadCareersData();
+            
+            // 语言切换按钮事件
+            document.getElementById('langCN').addEventListener('click', () => switchLanguage('cn'));
+            document.getElementById('langEN').addEventListener('click', () => switchLanguage('en'));
+            
+            // 选项卡切换功能
+            const tabBtns = document.querySelectorAll('.tab-btn');
+            const jobContents = document.querySelectorAll('.job-content');
+            
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // 移除所有active类
+                    tabBtns.forEach(b => b.classList.remove('active'));
+                    jobContents.forEach(content => content.classList.remove('active'));
+                    
+                    // 添加active类到当前元素
+                    btn.classList.add('active');
+                    const tabId = btn.getAttribute('data-tab');
+                    document.getElementById(`${tabId}-content`).classList.add('active');
+                });
+            });
+            
+            // 联系按钮功能
+            document.getElementById('contactBtn').addEventListener('click', function() {
+                if(currentLang === 'cn') {
+                    alert('感谢您的申请！请将简历发送至: wintexlogistics@wintex.com.ph');
+                } else {
+                    alert('Thank you for applying! Please send your resume to: wintexlogistics@wintex.com.ph');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

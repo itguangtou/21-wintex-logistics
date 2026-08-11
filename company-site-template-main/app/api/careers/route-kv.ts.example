@@ -1,0 +1,135 @@
+// 这是一个使用 Vercel KV 的示例实现
+// 如果部署在 Vercel，可以使用此方案替代文件系统存储
+// 
+// 使用步骤：
+// 1. 在 Vercel 项目中添加 KV 数据库
+// 2. 安装 @vercel/kv: npm install @vercel/kv
+// 3. 将环境变量 KV_REST_API_URL 和 KV_REST_API_TOKEN 添加到 Vercel 项目设置
+// 4. 将此文件重命名为 route.ts（备份原文件）
+
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { kv } from '@vercel/kv';
+
+const CareersSchema = z.object({
+  jobs: z.array(
+    z.object({
+      id: z.string(),
+      title: z.object({ cn: z.string(), en: z.string() }),
+      salary: z.object({ cn: z.string(), en: z.string() }).optional(),
+      responsibilities: z.object({
+        cn: z.string().optional(),
+        en: z.string().optional()
+      }).optional(),
+      requirements: z.object({
+        cn: z.string().optional(),
+        en: z.string().optional()
+      }).optional(),
+      preferredConditions: z.object({
+        cn: z.string().optional(),
+        en: z.string().optional()
+      }).optional()
+    })
+  ),
+  contact: z.object({
+    phone: z.string(),
+    email: z.string(),
+    address: z.object({ cn: z.string(), en: z.string() })
+  })
+});
+
+const KV_KEY = 'careers:data';
+
+async function readStore() {
+  try {
+    const data = await kv.get(KV_KEY);
+    if (data) {
+      return data;
+    }
+  } catch (error) {
+    console.error('KV read error:', error);
+  }
+  
+  // 默认数据
+  return {
+    jobs: [
+      { id: 'business', title: { cn: '商务助理', en: 'Business Assistant' }, salary: { cn: '薪资待遇：面议', en: 'Salary: Negotiable' } },
+      { id: 'translator', title: { cn: '现场翻译', en: 'On-site Translator' }, salary: { cn: '薪资待遇：面议', en: 'Salary: Negotiable' } },
+      { id: 'freight', title: { cn: '货代操作', en: 'Freight Forwarding Operator' }, salary: { cn: '薪资待遇：面议', en: 'Salary: Negotiable' } }
+    ],
+    contact: {
+      phone: '+63 9510941210',
+      email: 'wintexlogistics@wintex.com.ph',
+      address: { cn: '菲律宾马尼拉总部', en: 'Headquarters in Manila, Philippines' }
+    }
+  };
+}
+
+async function writeStore(data: unknown) {
+  await kv.set(KV_KEY, data);
+}
+
+function normalizeJobData(data: any) {
+  if (Array.isArray(data.jobs)) {
+    data.jobs = data.jobs.map((job: any) => {
+      const normalized = { ...job };
+      if (normalized.requirements) {
+        if (Array.isArray(normalized.requirements.cn)) {
+          normalized.requirements.cn = normalized.requirements.cn.join('\n');
+        }
+        if (Array.isArray(normalized.requirements.en)) {
+          normalized.requirements.en = normalized.requirements.en.join('\n');
+        }
+      }
+      if (normalized.responsibilities) {
+        if (Array.isArray(normalized.responsibilities.cn)) {
+          normalized.responsibilities.cn = normalized.responsibilities.cn.join('\n');
+        }
+        if (Array.isArray(normalized.responsibilities.en)) {
+          normalized.responsibilities.en = normalized.responsibilities.en.join('\n');
+        }
+      }
+      if (normalized.preferredConditions) {
+        if (Array.isArray(normalized.preferredConditions.cn)) {
+          normalized.preferredConditions.cn = normalized.preferredConditions.cn.join('\n');
+        }
+        if (Array.isArray(normalized.preferredConditions.en)) {
+          normalized.preferredConditions.en = normalized.preferredConditions.en.join('\n');
+        }
+      }
+      return normalized;
+    });
+  }
+  return data;
+}
+
+export async function GET() {
+  const data = await readStore();
+  const normalized = normalizeJobData(data);
+  return NextResponse.json(normalized, { headers: { 'cache-control': 'no-store' } });
+}
+
+export async function PUT(req: Request) {
+  try {
+    const body = await req.json();
+    const normalized = normalizeJobData(body);
+    const parsed = CareersSchema.parse(normalized);
+    await writeStore(parsed);
+    return NextResponse.json({ ok: true }, { headers: { 'cache-control': 'no-store' } });
+  } catch (e: any) {
+    return NextResponse.json({ ok: false, error: e?.message || 'Invalid payload' }, { status: 400 });
+  }
+}
+
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+    const normalized = normalizeJobData(body);
+    const parsed = CareersSchema.parse(normalized);
+    await writeStore(parsed);
+    return NextResponse.json({ ok: true }, { headers: { 'cache-control': 'no-store' } });
+  } catch (e: any) {
+    return NextResponse.json({ ok: false, error: e?.message || 'Invalid payload' }, { status: 400 });
+  }
+}
+

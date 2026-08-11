@@ -1,0 +1,1 @@
+export default function Hero(){return (<section className='container py-16'><h1 className='text-4xl font-bold'>以客户价值为中心的解决方案</h1></section>);}

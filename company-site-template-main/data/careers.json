@@ -1,0 +1,112 @@
+{
+  "jobs": [
+    {
+      "id": "business",
+      "title": {
+        "cn": "商务助理",
+        "en": "Business Assistant"
+      },
+      "salary": {
+        "cn": "薪资待遇：面议",
+        "en": "Salary: Negotiable"
+      },
+      "description": {
+        "cn": "负责工程分包商管理、总包商商务对接、重型运输成本控制等工作",
+        "en": "Responsible for subcontractor management, EPC contractor engagement, and heavy transport cost control"
+      },
+      "responsibilities": {
+        "cn": "<li>起草/监管7类分包合同：船务代理、码头操作、拖轮公司、吊装租赁、道路改造、电力迁改、林木修剪</li>\n<li>审核分包商账单，管控付款进度（单项目常涉及5+分包商协同）主导项目索赔：因总包商原因导致的运输延误及物流成本增加的索赔</li>\n<li>监控特有成本项：桥梁加固费、临时征地费、警车开道费、超限许可证</li>\n<li>编制风电项目分标段损益报告（海运/港口/陆运）</li>",
+        "en": "<li>Draft/supervise contracts for 7 types of subcontractors: shipping agency, terminal operations, tugboat services, crane rental, road modification, power line relocation, tree trimming</li><li>Verify subcontractor invoices and control payment schedules (managing 5+ subcontractors per project)</li><li>Process progress payment claims, change orders, performance bond extensions under engineering contracts</li><li>Lead project claims against EPC contractors for delays and cost overruns caused by EPC decisions</li><li>Monitor specialized costs: bridge reinforcement, temporary land acquisition, police escort fees, oversize permits</li><li>Prepare segmented P&L reports for wind projects (sea/port/land transport)</li>"
+      },
+      "requirements": {
+        "cn": "<li>5年以上工程物流/建筑施工企业经验（需参与过大型设备运输项目）</li><li>3年以上多类型分包商管理经验（同时管理≥3类）</li><li>≥5次成功向总包商索赔经验（需面试展示证明文件）</li><li>精通重型运输合同条款设计：滞期费阶梯计价、吊装事故责任界定</li><li>熟悉菲律宾大件运输法规：DPWH超限许可流程、LGU地方道路使用许可、NGCP线路迁改规范</li><li>总包商索赔专长：证据链构建、成本计算模型</li><li>菲律宾籍，能适应项目现场工作环境</li><li>持有有效驾照，能前往不同项目现场</li><li>流利的英语沟通能力</li>",
+        "en": "<li>5+ years in engineering logistics/construction (experience with heavy equipment transport projects required)</li><li>3+ years managing multiple subcontractor types (concurrently managing ≥3 types)</li><li>≥5 successful claims against EPC contractors (proof required during interview)</li><li>Expertise in heavy transport contract clauses: demurrage tiered pricing, crane accident liability allocation</li><li>Knowledge of Philippine heavy transport regulations: DPWH oversize permits, LGU road access approvals, NGCP relocation standards</li><li>EPC claim specialization: evidence chain development, cost modeling</li><li>Filipino national, able to work at project sites</li><li>Valid driver's license, able to travel to different sites</li><li>Fluent English communication skills</li>"
+      },
+      "preferredConditions": {
+        "cn": "<li>有大型工程物流项目经验者优先</li>",
+        "en": "<li>Experience in large-scale engineering logistics projects preferred</li>"
+      }
+    },
+    {
+      "id": "translator",
+      "title": {
+        "cn": "现场翻译",
+        "en": "On-site Translator"
+      },
+      "salary": {
+        "cn": "薪资待遇：面议",
+        "en": "Salary: Negotiable"
+      },
+      "description": {
+        "cn": "为中方特种设备操作手提供现场英语口语翻译服务",
+        "en": "Provide on-site English interpretation for Chinese heavy equipment operators"
+      },
+      "responsibilities": {
+        "cn": "<li>为中方特种设备操作手提供现场英语口语翻译服务</li>\n<li>协助操作手与当地工作人员进行日常沟通协调</li>\n<li>翻译设备操作手册、安全规范等技术文档</li>\n<li>参与项目会议并提供中英双向翻译支持</li>\n<li>协助处理中方员工与当地社区的基本沟通</li>\n<li>记录并整理翻译日志，确保信息准确传递</li>",
+        "en": "<li>Provide on-site English interpretation for Chinese heavy equipment operators</li><li>Assist operators in daily communication with local staff</li><li>Translate technical documents such as equipment manuals and safety regulations</li><li>Provide bilingual support in project meetings</li><li>Assist in basic communication between Chinese staff and local communities</li><li>Maintain interpretation logs to ensure accurate information transfer</li>"
+      },
+      "requirements": {
+        "cn": "<li>中国籍应届本科毕业生</li><li>英语相关专业优先（如翻译、英语、国际商务等）</li><li>大学英语六级600分以上或专四/专八良好以上</li><li>优秀的中英双语口语表达能力</li><li>快速学习技术术语和专业知识的能力</li><li>良好的跨文化沟通和理解能力</li><li>吃苦耐劳，能适应项目现场环境</li><li>有耐心，脾气好，能妥善处理压力</li><li>积极主动，有上进心，学习能力强</li><li>具备优秀的情绪管理能力</li><li>良好的团队协作精神</li>",
+        "en": "<li>Chinese fresh graduate with bachelor's degree</li><li>English-related majors preferred (translation, English, international business, etc.)</li><li>CET-6 score ≥600 or TEM-4/8 with good grade</li><li>Excellent Chinese-English oral interpretation skills</li><li>Ability to quickly learn technical terminology and professional knowledge</li><li>Strong cross-cultural communication and understanding skills</li><li>Hardworking, adaptable to project site conditions</li><li>Patient, good-tempered, able to handle pressure</li><li>Proactive, motivated, fast learner</li><li>Excellent emotional management skills</li><li>Strong team collaboration spirit</li>"
+      },
+      "preferredConditions": {
+        "cn": "<li>有机械、工程类知识背景</li><li>通过CATTI口译三级或以上</li><li>有海外学习或生活经历</li><li>掌握基础菲律宾语</li>",
+        "en": "<li>Background in mechanical/engineering knowledge</li><li>CATTI Level 3 Interpretation or higher</li><li>Overseas study or living experience</li><li>Basic Filipino language skills</li>"
+      }
+    },
+    {
+      "id": "job-1763254816433",
+      "title": {
+        "cn": "新岗位1",
+        "en": "New Position 1"
+      },
+      "salary": {
+        "cn": "薪资待遇：面议",
+        "en": "Salary: Negotiable"
+      },
+      "responsibilities": {
+        "cn": "<li>待定</li>",
+        "en": "<li>Please Edit</li>"
+      },
+      "requirements": {
+        "cn": "<li>待定</li>",
+        "en": "<li>Please Edit</li>"
+      },
+      "preferredConditions": {
+        "cn": "<li>请填写</li>",
+        "en": "<li>Please Edit</li>"
+      }
+    },
+    {
+      "id": "job-1763255141055",
+      "title": {
+        "cn": "新岗位2",
+        "en": "New Position 2"
+      },
+      "salary": {
+        "cn": "薪资待遇：面议",
+        "en": "Salary: Negotiable"
+      },
+      "responsibilities": {
+        "cn": "<li>尝试编辑中</li>",
+        "en": "<li>Please Edit</li>"
+      },
+      "requirements": {
+        "cn": "<li>尝试编辑中</li>",
+        "en": "<li>Please Edit</li>"
+      },
+      "preferredConditions": {
+        "cn": "<li>尝试编辑中</li>",
+        "en": "<li>Please Edit</li>"
+      }
+    }
+  ],
+  "contact": {
+    "phone": "+63 917 620 0359",
+    "email": "wintexlogistics@wintex.com.ph",
+    "address": {
+      "cn": "菲律宾马卡蒂市博尼法西奥堡BGC塔吉格市第7大道和第32街贸易金融大厦12楼1309单元",
+      "en": "Unit 1309 12 Floor Trade and Financial Tower 7th ave and 32nd st, Fort Bonifacio, BGC Taguig City"
+    }
+  }
+}
