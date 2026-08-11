@@ -2,10 +2,7 @@
 
 import type { Locale } from '@/i18n/routing';
 import { useEffect, useRef, useState } from 'react';
-import {
-  DEFAULT_ABOUT_CONTENT,
-  type AboutPageContent,
-} from '@/lib/aboutPageContent';
+import type { AboutPageContent } from '@/lib/aboutPageContent';
 
 function useInView(options = {}) {
   const [isInView, setIsInView] = useState(false);
@@ -17,9 +14,7 @@ function useInView(options = {}) {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsInView(true);
-        }
+        if (entry.isIntersecting) setIsInView(true);
       },
       {
         threshold: 0.2,
@@ -29,39 +24,25 @@ function useInView(options = {}) {
     );
 
     observer.observe(element);
-
-    return () => {
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, []);
 
   return [ref, isInView] as const;
 }
 
-export default function AboutPage({ params: { locale } }: { params: { locale: string } }) {
+export default function AboutPageClient({
+  locale,
+  initialContent,
+}: {
+  locale: string;
+  initialContent: AboutPageContent;
+}) {
   const currentLocale = (locale as Locale) ?? 'zh';
   const lang = currentLocale === 'en' ? 'en' : 'zh';
-  const [pageContent, setPageContent] = useState<AboutPageContent>(DEFAULT_ABOUT_CONTENT);
+  const pageContent = initialContent;
 
   const [bgImageLoaded, setBgImageLoaded] = useState(false);
   const [bgImageError, setBgImageError] = useState(false);
-
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const res = await fetch('/api/pages/about', { cache: 'no-store' });
-        if (!res.ok) return;
-        const j = await res.json();
-        if (mounted && j?.content) setPageContent(j.content);
-      } catch {
-        /* keep default */
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   useEffect(() => {
     const src = pageContent.backgroundImage || '/highresolution/WechatIMG153.jpg';
