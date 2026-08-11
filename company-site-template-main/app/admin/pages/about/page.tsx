@@ -1,7 +1,7 @@
 'use client';
 
-import ModulePlaceholder from '@/components/admin/ModulePlaceholder';
+import AboutPageEditor from '@/components/admin/AboutPageEditor';
 
 export default function Page() {
-  return <ModulePlaceholder title="关于我们" />;
+  return <AboutPageEditor />;
 }

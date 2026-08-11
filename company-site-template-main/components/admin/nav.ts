@@ -7,7 +7,7 @@ export type AdminNavItem = {
 
 export const ADMIN_NAV: AdminNavItem[] = [
   { href: '/admin/pages/home', label: '首页', ready: false },
-  { href: '/admin/pages/about', label: '关于我们', ready: false },
+  { href: '/admin/pages/about', label: '关于我们', ready: true },
   { href: '/admin/pages/mission', label: '实力见证', ready: false },
   { href: '/admin/pages/equipment', label: '装备清单', ready: false },
   { href: '/admin/news', label: '新闻', ready: true },
