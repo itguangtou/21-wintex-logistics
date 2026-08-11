@@ -41,31 +41,18 @@ export default function AboutPageClient({
   const lang = currentLocale === 'en' ? 'en' : 'zh';
   const pageContent = initialContent;
 
-  const [bgImageLoaded, setBgImageLoaded] = useState(false);
-  const [bgImageError, setBgImageError] = useState(false);
-
-  useEffect(() => {
-    const src = pageContent.backgroundImage || '/highresolution/WechatIMG153.jpg';
-    setBgImageLoaded(false);
-    setBgImageError(false);
-    const img = new Image();
-    img.src = src;
-    img.onload = () => setBgImageLoaded(true);
-    img.onerror = () => {
-      setBgImageError(true);
-      setBgImageLoaded(true);
-    };
-  }, [pageContent.backgroundImage]);
-
-  const [section1InView, setSection1InView] = useState(false);
-  const [section2InView, setSection2InView] = useState(false);
-  const [section3InView, setSection3InView] = useState(false);
+  const [section1InView, setSection1InView] = useState(true);
+  const [section2InView, setSection2InView] = useState(true);
+  const [section3InView, setSection3InView] = useState(true);
 
   useEffect(() => {
     setSection1InView(true);
-    setTimeout(() => setSection2InView(true), 200);
-    setTimeout(() => setSection3InView(true), 400);
+    setSection2InView(true);
+    setSection3InView(true);
   }, []);
+
+  const [bgImageLoaded, setBgImageLoaded] = useState(true);
+  const [bgImageError, setBgImageError] = useState(false);
 
   const [networkRef, networkInView] = useInView();
   const [isMobile, setIsMobile] = useState(false);

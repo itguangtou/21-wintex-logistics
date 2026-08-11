@@ -1,3 +1,4 @@
+import { unstable_noStore as noStore } from 'next/cache';
 import { getSupabaseAdmin, hasSupabaseConfig } from '@/lib/supabase';
 import {
   DEFAULT_ABOUT_CONTENT,
@@ -7,8 +8,10 @@ import AboutPageClient from '@/components/about/AboutPageClient';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
+export const fetchCache = 'force-no-store';
 
 async function loadAboutContent(): Promise<AboutPageContent> {
+  noStore();
   if (!hasSupabaseConfig()) {
     return structuredClone(DEFAULT_ABOUT_CONTENT);
   }
