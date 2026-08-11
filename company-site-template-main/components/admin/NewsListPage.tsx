@@ -64,7 +64,7 @@ function StatusBadge({ status }: { status: NewsStatus }) {
 
 export default function NewsListPage() {
   const router = useRouter();
-  const { setSubtitle, setFooter } = useAdminChrome();
+  const { setSubtitle } = useAdminChrome();
   const [keyword, setKeyword] = useState('');
   const [status, setStatus] = useState<StatusFilter>('all');
   const [rows, setRows] = useState(MOCK_NEWS);
@@ -86,19 +86,6 @@ export default function NewsListPage() {
       );
     });
   }, [rows, keyword, status]);
-
-  useEffect(() => {
-    setFooter(
-      <div className="w-full flex items-center justify-between text-xs text-gray-500">
-        <span>
-          共 {filtered.length} 条
-          {status !== 'all' || keyword ? `（已筛选，全库 ${rows.length}）` : ''}
-        </span>
-        <span>分页将在接口接入后启用</span>
-      </div>
-    );
-    return () => setFooter(null);
-  }, [filtered.length, keyword, rows.length, setFooter, status]);
 
   const columns: DataTableColumn<MockNews>[] = [
     {
@@ -177,6 +164,10 @@ export default function NewsListPage() {
         onRowClick={(row) => router.push(`/admin/news/${row.id}`)}
         emptyText="没有匹配的新闻"
       />
+      <p className="mt-3 text-xs text-gray-500">
+        共 {filtered.length} 条
+        {status !== 'all' || keyword ? `（已筛选，全库 ${rows.length}）` : ''}
+      </p>
     </div>
   );
 }

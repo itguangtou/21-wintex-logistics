@@ -10,15 +10,12 @@ export default function ModulePlaceholder({
   title: string;
   description?: string;
 }) {
-  const { setSubtitle, setFooter } = useAdminChrome();
+  const { setSubtitle } = useAdminChrome();
 
   useEffect(() => {
     setSubtitle('敬请期待');
-    setFooter(null);
-    return () => {
-      setSubtitle(null);
-    };
-  }, [setSubtitle, setFooter]);
+    return () => setSubtitle(null);
+  }, [setSubtitle]);
 
   return (
     <div className="p-6 lg:p-8">

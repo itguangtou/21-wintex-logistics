@@ -24,7 +24,7 @@ interface CareersData {
 
 export default function CareersEditor() {
   const { logout } = useAdminAuth();
-  const { setSubtitle, setFooter } = useAdminChrome();
+  const { setSubtitle } = useAdminChrome();
   const [data, setData] = useState<CareersData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -295,34 +295,6 @@ export default function CareersEditor() {
     }
   };
 
-  useEffect(() => {
-    if (!data) {
-      setFooter(null);
-      return;
-    }
-    setFooter(
-      <>
-        <button
-          type="button"
-          onClick={saveDraft}
-          className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm hover:bg-gray-50"
-        >
-          保存草稿（本地）
-        </button>
-        <button
-          type="button"
-          onClick={() => void publish()}
-          disabled={saving}
-          className="px-5 py-2 rounded-lg bg-[#0E2745] text-white text-sm font-semibold hover:bg-[#163a5f] disabled:opacity-50"
-        >
-          {saving ? '发布中…' : '发布到网站'}
-        </button>
-      </>
-    );
-    return () => setFooter(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- footer buttons bind latest save/publish via closure refresh on data/saving
-  }, [data, saving, setFooter]);
-
   if (!data) {
     return (
       <div className="p-8">
@@ -336,6 +308,24 @@ export default function CareersEditor() {
         {error && (
           <div className="mb-4 px-3 py-2 rounded-lg bg-red-50 border border-red-100 text-red-700 text-sm">{error}</div>
         )}
+
+        <div className="mb-4 flex flex-wrap gap-3">
+          <button
+            type="button"
+            onClick={saveDraft}
+            className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm hover:bg-gray-50"
+          >
+            保存草稿（本地）
+          </button>
+          <button
+            type="button"
+            onClick={() => void publish()}
+            disabled={saving}
+            className="px-5 py-2 rounded-lg bg-[#0E2745] text-white text-sm font-semibold hover:bg-[#163a5f] disabled:opacity-50"
+          >
+            {saving ? '发布中…' : '发布到网站'}
+          </button>
+        </div>
 
         <section className="grid gap-6">
           <div className="flex items-center justify-between mb-2">
