@@ -82,12 +82,6 @@ export default function ImageReplaceField({
             />
           </div>
           <p className="text-xs text-gray-500">本地选择一张图即可替换当前图（JPEG / PNG / WebP / GIF，≤8MB）</p>
-          <input
-            className="border rounded-lg px-3 py-2 text-sm w-full outline-none focus:border-[#0E2745] focus:ring-2 focus:ring-[#0E2745]/15"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder="也可粘贴图片 URL"
-          />
           {error && <span className="text-sm text-red-600">{error}</span>}
         </div>
       </div>
