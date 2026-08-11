@@ -13,9 +13,6 @@ function cloneDefault(): AboutPageContent {
   return structuredClone(DEFAULT_ABOUT_CONTENT);
 }
 
-const inputClass =
-  'w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#0E2745] focus:ring-2 focus:ring-[#0E2745]/15 bg-white';
-
 export default function AboutPageEditor() {
   const { setSubtitle } = useAdminChrome();
   const [data, setData] = useState<AboutPageContent | null>(null);
@@ -59,35 +56,6 @@ export default function AboutPageEditor() {
 
   return (
     <div className="p-6 lg:p-8 max-w-5xl space-y-8">
-      {/* 单项 → 表单 */}
-      <section>
-        <h2 className="text-base font-semibold text-[#0E2745] mb-3">页面资源</h2>
-        <div className="rounded-xl border border-gray-200 bg-white divide-y divide-gray-100">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 px-4 py-3.5">
-            <label className="sm:w-36 shrink-0 text-sm text-gray-600">背景图路径</label>
-            <input
-              className={inputClass}
-              value={data.backgroundImage}
-              onChange={(e) => setData({ ...data, backgroundImage: e.target.value })}
-            />
-          </div>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 px-4 py-3.5">
-            <label className="sm:w-36 shrink-0 text-sm text-gray-600">中心 Logo</label>
-            <input
-              className={inputClass}
-              value={data.network.centerLogo}
-              onChange={(e) =>
-                setData({
-                  ...data,
-                  network: { ...data.network, centerLogo: e.target.value },
-                })
-              }
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* 多项 → 列表 */}
       <section>
         <div className="mb-3">
           <h2 className="text-base font-semibold text-[#0E2745]">引言区块</h2>
