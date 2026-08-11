@@ -6,7 +6,8 @@
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:migrate:init": "node scripts/db-migrate.mjs doc/sql/001_init_schema.sql",
     "db:seed:careers": "node scripts/seed-careers.mjs",
-    "db:seed:admin": "node scripts/seed-admin.mjs"
+    "db:seed:admin": "node scripts/seed-admin.mjs",
+    "db:seed:about": "node scripts/seed-about-page.mjs"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.112.3",

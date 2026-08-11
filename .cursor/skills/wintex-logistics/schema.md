@@ -28,17 +28,21 @@
 ### `equipment` / `timeline_items` / `site_settings`
 - 见 `001_init_schema.sql`；列表型 CMS 后续用
 
-## 计划表 `pages`（关于我们等，待迁移）
+## 计划表 `pages`（关于我们等，已建）
 
 ```sql
 CREATE TABLE IF NOT EXISTS pages (
   slug TEXT PRIMARY KEY,                 -- 'about' | 'home' | ...
-  content JSONB NOT NULL DEFAULT '{}',
+  content JSONB NOT NULL DEFAULT '{}',   -- 前台已发布
+  draft_content JSONB,                  -- 管理端草稿
   status TEXT NOT NULL DEFAULT 'published',
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   updated_by TEXT
 );
 ```
+
+API：`GET/PUT /api/pages/[slug]`（PUT 需登录；`mode: draft|publish`）
+Seed：`npm run db:seed:about`
 
 ### `about` 的 `content` 形状
 
@@ -54,8 +58,8 @@ CREATE TABLE IF NOT EXISTS pages (
 # 仓库根目录
 node scripts/db-migrate.mjs doc/sql/001_init_schema.sql
 node scripts/db-migrate.mjs doc/sql/002_admin_users.sql
-# 新建文件后：
 node scripts/db-migrate.mjs doc/sql/003_pages.sql
+npm run db:seed:about
 ```
 
 或 `npm run db:migrate -- doc/sql/003_pages.sql`
