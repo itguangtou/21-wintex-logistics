@@ -284,6 +284,42 @@ export default function MissionPageEditor() {
     }
   };
 
+  const moveTimelineItem = async (id: number, direction: 'up' | 'down') => {
+    const idx = timeline.findIndex((r) => r.id === id);
+    if (idx < 0) return;
+    const swapWith = direction === 'up' ? idx - 1 : idx + 1;
+    if (swapWith < 0 || swapWith >= timeline.length) return;
+
+    const ordered = timeline.map((r) => r.id);
+    const tmp = ordered[idx];
+    ordered[idx] = ordered[swapWith];
+    ordered[swapWith] = tmp;
+
+    setTimelineBusy(true);
+    setMessage(null);
+    setError(null);
+    try {
+      const res = await fetch('/api/timeline/reorder', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ orderedIds: ordered }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        await logout();
+        throw new Error(j?.error || '登录已过期，请重新登录');
+      }
+      if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
+      setMessage('顺序已更新（前台刷新即见）');
+      await loadTimeline();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : '调整顺序失败');
+    } finally {
+      setTimelineBusy(false);
+    }
+  };
+
   const deleteTimelineItem = async (row: TimelineItemRow) => {
     if (row.id <= 0) {
       setError('默认占位数据不可删除');
@@ -383,7 +419,7 @@ export default function MissionPageEditor() {
           {timeline.length === 0 ? (
             <li className="px-4 py-10 text-center text-sm text-gray-400">暂无条目，点击「新增条目」</li>
           ) : (
-            timeline.map((row) => {
+            timeline.map((row, index) => {
               const draft = timelineDrafts[row.id] || rowToDraft(row);
               const open = !!openTimeline[row.id];
               const name = `${row.year} · ${row.project_name_zh || row.project_name_en || '未命名'}`;
@@ -394,40 +430,54 @@ export default function MissionPageEditor() {
                   open={open}
                   onToggle={() => setOpenTimeline((prev) => ({ ...prev, [row.id]: !prev[row.id] }))}
                   actions={
-                    <button
-                      type="button"
-                      disabled={timelineBusy}
-                      className="text-sm text-red-600 hover:underline disabled:opacity-50"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        void deleteTimelineItem(row);
-                      }}
-                    >
-                      删除
-                    </button>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        disabled={timelineBusy || index === 0}
+                        className="text-sm text-[#0E2745] hover:underline disabled:opacity-30"
+                        title="上移"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void moveTimelineItem(row.id, 'up');
+                        }}
+                      >
+                        上移
+                      </button>
+                      <button
+                        type="button"
+                        disabled={timelineBusy || index === timeline.length - 1}
+                        className="text-sm text-[#0E2745] hover:underline disabled:opacity-30"
+                        title="下移"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void moveTimelineItem(row.id, 'down');
+                        }}
+                      >
+                        下移
+                      </button>
+                      <button
+                        type="button"
+                        disabled={timelineBusy}
+                        className="text-sm text-red-600 hover:underline disabled:opacity-50"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          void deleteTimelineItem(row);
+                        }}
+                      >
+                        删除
+                      </button>
+                    </div>
                   }
                 >
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <label className="grid gap-1">
-                      <span className="text-sm font-medium text-gray-700">年份</span>
-                      <input
-                        className="border rounded-lg px-3 py-2 text-sm outline-none focus:border-[#0E2745] focus:ring-2 focus:ring-[#0E2745]/15"
-                        value={draft.year}
-                        onChange={(e) => patchTimelineDraft(row.id, { year: e.target.value })}
-                      />
-                    </label>
-                    <label className="grid gap-1">
-                      <span className="text-sm font-medium text-gray-700">排序</span>
-                      <input
-                        type="number"
-                        className="border rounded-lg px-3 py-2 text-sm outline-none focus:border-[#0E2745] focus:ring-2 focus:ring-[#0E2745]/15"
-                        value={draft.sort_order}
-                        onChange={(e) =>
-                          patchTimelineDraft(row.id, { sort_order: Number(e.target.value) || 0 })
-                        }
-                      />
-                    </label>
-                  </div>
+                  <label className="grid gap-1 max-w-xs">
+                    <span className="text-sm font-medium text-gray-700">年份</span>
+                    <input
+                      className="border rounded-lg px-3 py-2 text-sm outline-none focus:border-[#0E2745] focus:ring-2 focus:ring-[#0E2745]/15"
+                      value={draft.year}
+                      onChange={(e) => patchTimelineDraft(row.id, { year: e.target.value })}
+                    />
+                  </label>
+                  <p className="text-xs text-gray-500">列表顺序即前台展示顺序，请用右侧「上移 / 下移」调整</p>
                   <BilingualField
                     label="项目名称"
                     zh={draft.project_name_zh}

@@ -20,6 +20,16 @@ const TimelineCreateSchema = z.object({
   sort_order: z.number().int().optional(),
 });
 
+function noStoreJson(body: unknown, init?: { status?: number }) {
+  return NextResponse.json(body, {
+    status: init?.status ?? 200,
+    headers: {
+      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      Pragma: 'no-cache',
+    },
+  });
+}
+
 function mapRow(row: Record<string, unknown>): TimelineItemRow {
   return {
     id: Number(row.id),
@@ -36,7 +46,7 @@ function mapRow(row: Record<string, unknown>): TimelineItemRow {
 
 export async function GET() {
   if (!hasSupabaseConfig()) {
-    return NextResponse.json({ items: defaultTimelineRows(), source: 'default' });
+    return noStoreJson({ items: defaultTimelineRows(), source: 'default' });
   }
 
   try {
@@ -46,25 +56,25 @@ export async function GET() {
       .select(
         'id, year, project_name_zh, project_name_en, description_zh, description_en, parent_group, sort_order, updated_at'
       )
-      .order('year', { ascending: true })
-      .order('sort_order', { ascending: true });
+      .order('sort_order', { ascending: true })
+      .order('id', { ascending: true });
 
     if (error) {
       console.error('[timeline GET]', error.message);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return noStoreJson({ error: error.message }, { status: 500 });
     }
 
     if (!data || data.length === 0) {
-      return NextResponse.json({ items: defaultTimelineRows(), source: 'default' });
+      return noStoreJson({ items: defaultTimelineRows(), source: 'default' });
     }
 
-    return NextResponse.json({
+    return noStoreJson({
       items: data.map((row) => mapRow(row as Record<string, unknown>)),
       source: 'db',
     });
   } catch (e: any) {
     console.error('[timeline GET]', e);
-    return NextResponse.json({ error: e?.message || '读取失败' }, { status: 500 });
+    return noStoreJson({ error: e?.message || '读取失败' }, { status: 500 });
   }
 }
 
@@ -72,13 +82,13 @@ export async function POST(req: NextRequest) {
   try {
     await requireAdminSession();
     if (!hasSupabaseConfig()) {
-      return NextResponse.json({ error: '未配置 Supabase' }, { status: 503 });
+      return noStoreJson({ error: '未配置 Supabase' }, { status: 503 });
     }
 
     const body = await req.json();
     const parsed = TimelineCreateSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
+      return noStoreJson(
         { error: '内容格式不正确', details: parsed.error.flatten() },
         { status: 400 }
       );
@@ -115,12 +125,12 @@ export async function POST(req: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return noStoreJson({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ ok: true, item: mapRow(data as Record<string, unknown>) });
+    return noStoreJson({ ok: true, item: mapRow(data as Record<string, unknown>) });
   } catch (e: any) {
     const status = e?.status === 401 ? 401 : 500;
-    return NextResponse.json({ error: e?.message || '创建失败' }, { status });
+    return noStoreJson({ error: e?.message || '创建失败' }, { status });
   }
 }

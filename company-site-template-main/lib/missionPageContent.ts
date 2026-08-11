@@ -133,9 +133,11 @@ export function groupTimelineByYear(
   rows: TimelineItemRow[],
   locale: 'zh' | 'en'
 ): TimelineYearGroup[] {
+  // 前台顺序以 sort_order 为准（管理端上下移动即改此值）；同年条目合并展示
   const sorted = [...rows].sort((a, b) => {
-    if (a.year !== b.year) return a.year.localeCompare(b.year);
-    return (a.sort_order ?? 0) - (b.sort_order ?? 0);
+    const so = (a.sort_order ?? 0) - (b.sort_order ?? 0);
+    if (so !== 0) return so;
+    return a.id - b.id;
   });
 
   const map = new Map<string, TimelineYearGroup>();

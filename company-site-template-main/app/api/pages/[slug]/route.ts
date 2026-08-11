@@ -84,22 +84,32 @@ function parseContent(
 
 type RouteCtx = { params: { slug: string } };
 
+function noStoreJson(body: unknown, init?: { status?: number }) {
+  return NextResponse.json(body, {
+    status: init?.status ?? 200,
+    headers: {
+      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      Pragma: 'no-cache',
+    },
+  });
+}
+
 export async function GET(_req: NextRequest, ctx: RouteCtx) {
   const slug = ctx.params.slug;
   if (!slug) {
-    return NextResponse.json({ error: '缺少 slug' }, { status: 400 });
+    return noStoreJson({ error: '缺少 slug' }, { status: 400 });
   }
 
   if (!hasSupabaseConfig()) {
     if (isSupportedSlug(slug)) {
-      return NextResponse.json({
+      return noStoreJson({
         slug,
         status: 'published',
         content: defaultFor(slug),
         source: 'default',
       });
     }
-    return NextResponse.json({ error: '未配置 Supabase' }, { status: 503 });
+    return noStoreJson({ error: '未配置 Supabase' }, { status: 503 });
   }
 
   try {
@@ -113,23 +123,23 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
 
     if (error) {
       console.error('[pages GET]', error.message);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return noStoreJson({ error: error.message }, { status: 500 });
     }
 
     if (!data) {
       if (isSupportedSlug(slug)) {
-        return NextResponse.json({
+        return noStoreJson({
           slug,
           status: 'published',
           content: defaultFor(slug),
           source: 'default',
         });
       }
-      return NextResponse.json({ error: '页面不存在' }, { status: 404 });
+      return noStoreJson({ error: '页面不存在' }, { status: 404 });
     }
 
     if (!isSupportedSlug(slug)) {
-      return NextResponse.json({
+      return noStoreJson({
         slug: data.slug,
         status: data.status,
         content: session ? data.draft_content ?? data.content : data.content,
@@ -143,7 +153,7 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
       ? normalizeContent(slug, data.draft_content ?? data.content)
       : normalizeContent(slug, data.content);
 
-    return NextResponse.json({
+    return noStoreJson({
       slug: data.slug,
       status: data.status,
       content,
@@ -153,7 +163,7 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
     });
   } catch (e: any) {
     console.error('[pages GET]', e);
-    return NextResponse.json({ error: e?.message || '读取失败' }, { status: 500 });
+    return noStoreJson({ error: e?.message || '读取失败' }, { status: 500 });
   }
 }
 

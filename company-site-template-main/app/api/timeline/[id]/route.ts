@@ -17,6 +17,16 @@ const TimelineUpdateSchema = z.object({
   sort_order: z.number().int().optional(),
 });
 
+function noStoreJson(body: unknown, init?: { status?: number }) {
+  return NextResponse.json(body, {
+    status: init?.status ?? 200,
+    headers: {
+      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      Pragma: 'no-cache',
+    },
+  });
+}
+
 function mapRow(row: Record<string, unknown>): TimelineItemRow {
   return {
     id: Number(row.id),
@@ -36,19 +46,19 @@ type RouteCtx = { params: { id: string } };
 export async function PUT(req: NextRequest, ctx: RouteCtx) {
   const id = Number(ctx.params.id);
   if (!Number.isFinite(id) || id <= 0) {
-    return NextResponse.json({ error: '无效 id' }, { status: 400 });
+    return noStoreJson({ error: '无效 id' }, { status: 400 });
   }
 
   try {
     await requireAdminSession();
     if (!hasSupabaseConfig()) {
-      return NextResponse.json({ error: '未配置 Supabase' }, { status: 503 });
+      return noStoreJson({ error: '未配置 Supabase' }, { status: 503 });
     }
 
     const body = await req.json();
     const parsed = TimelineUpdateSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
+      return noStoreJson(
         { error: '内容格式不正确', details: parsed.error.flatten() },
         { status: 400 }
       );
@@ -59,7 +69,7 @@ export async function PUT(req: NextRequest, ctx: RouteCtx) {
       if (v !== undefined) patch[k] = v;
     }
     if (Object.keys(patch).length === 0) {
-      return NextResponse.json({ error: '无更新字段' }, { status: 400 });
+      return noStoreJson({ error: '无更新字段' }, { status: 400 });
     }
 
     const supabase = getSupabaseAdmin();
@@ -73,40 +83,40 @@ export async function PUT(req: NextRequest, ctx: RouteCtx) {
       .maybeSingle();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return noStoreJson({ error: error.message }, { status: 500 });
     }
     if (!data) {
-      return NextResponse.json({ error: '条目不存在' }, { status: 404 });
+      return noStoreJson({ error: '条目不存在' }, { status: 404 });
     }
 
-    return NextResponse.json({ ok: true, item: mapRow(data as Record<string, unknown>) });
+    return noStoreJson({ ok: true, item: mapRow(data as Record<string, unknown>) });
   } catch (e: any) {
     const status = e?.status === 401 ? 401 : 500;
-    return NextResponse.json({ error: e?.message || '更新失败' }, { status });
+    return noStoreJson({ error: e?.message || '更新失败' }, { status });
   }
 }
 
 export async function DELETE(_req: NextRequest, ctx: RouteCtx) {
   const id = Number(ctx.params.id);
   if (!Number.isFinite(id) || id <= 0) {
-    return NextResponse.json({ error: '无效 id' }, { status: 400 });
+    return noStoreJson({ error: '无效 id' }, { status: 400 });
   }
 
   try {
     await requireAdminSession();
     if (!hasSupabaseConfig()) {
-      return NextResponse.json({ error: '未配置 Supabase' }, { status: 503 });
+      return noStoreJson({ error: '未配置 Supabase' }, { status: 503 });
     }
 
     const supabase = getSupabaseAdmin();
     const { error } = await supabase.from('timeline_items').delete().eq('id', id);
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return noStoreJson({ error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ ok: true, id });
+    return noStoreJson({ ok: true, id });
   } catch (e: any) {
     const status = e?.status === 401 ? 401 : 500;
-    return NextResponse.json({ error: e?.message || '删除失败' }, { status });
+    return noStoreJson({ error: e?.message || '删除失败' }, { status });
   }
 }
