@@ -4,7 +4,7 @@ import {
   DEFAULT_ABOUT_CONTENT,
   type AboutPageContent,
 } from '@/lib/aboutPageContent';
-import AboutPageClient from '@/components/about/AboutPageClient';
+import AboutPageView from '@/components/about/AboutPageView';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -39,5 +39,5 @@ export default async function AboutPage({
   params: { locale: string };
 }) {
   const content = await loadAboutContent();
-  return <AboutPageClient locale={params.locale} initialContent={content} />;
+  return <AboutPageView locale={params.locale} content={content} />;
 }
