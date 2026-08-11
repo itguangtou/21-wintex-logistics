@@ -115,14 +115,7 @@ export default function AboutPageEditor() {
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
       if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
-      if (mode === 'draft') {
-        setMessage('草稿已保存（仅后台可见）');
-      } else {
-        const preview = `/zh/about?v=${Date.now()}`;
-        setMessage('已发布。请点右侧链接查看前台（勿看首页简介）');
-        // 新标签打开，带时间戳绕过浏览器缓存
-        window.open(preview, '_blank', 'noopener,noreferrer');
-      }
+      setMessage(mode === 'draft' ? '草稿已保存（仅后台可见）' : '已发布，前台关于我们页已更新');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '保存失败');
     } finally {
@@ -190,14 +183,6 @@ export default function AboutPageEditor() {
         </button>
         {message && <span className="text-sm text-emerald-700">{message}</span>}
         {error && <span className="text-sm text-red-600">{error}</span>}
-        <a
-          href={`/zh/about?v=${Date.now()}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-[#0E2745] underline underline-offset-2 ml-auto"
-        >
-          打开前台关于我们页
-        </a>
       </div>
 
       <section>
