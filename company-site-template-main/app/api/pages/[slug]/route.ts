@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getSupabaseAdmin, hasSupabaseConfig } from '@/lib/supabase';
 import { getAdminSession, requireAdminSession } from '@/lib/auth';
 import { DEFAULT_ABOUT_CONTENT, type AboutPageContent } from '@/lib/aboutPageContent';
+import { DEFAULT_MISSION_CONTENT, type MissionPageContent } from '@/lib/missionPageContent';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,10 +24,62 @@ const AboutContentSchema = z.object({
   }),
 });
 
-function normalizeAbout(raw: unknown): AboutPageContent {
-  const parsed = AboutContentSchema.safeParse(raw);
+const MissionContentSchema = z.object({
+  header: z.object({
+    title: LocaleTextSchema,
+    subtitle: LocaleTextSchema,
+  }),
+  focus: z.object({
+    label: LocaleTextSchema,
+    body: LocaleTextSchema,
+    cards: z
+      .array(
+        z.object({
+          image: z.string(),
+          title: LocaleTextSchema,
+          caption: LocaleTextSchema,
+        })
+      )
+      .min(1),
+  }),
+});
+
+type SupportedSlug = 'about' | 'mission';
+
+function isSupportedSlug(slug: string): slug is SupportedSlug {
+  return slug === 'about' || slug === 'mission';
+}
+
+function defaultFor(slug: SupportedSlug): AboutPageContent | MissionPageContent {
+  return slug === 'about'
+    ? structuredClone(DEFAULT_ABOUT_CONTENT)
+    : structuredClone(DEFAULT_MISSION_CONTENT);
+}
+
+function normalizeContent(
+  slug: SupportedSlug,
+  raw: unknown
+): AboutPageContent | MissionPageContent {
+  if (slug === 'about') {
+    const parsed = AboutContentSchema.safeParse(raw);
+    if (parsed.success) return parsed.data;
+    return structuredClone(DEFAULT_ABOUT_CONTENT);
+  }
+  const parsed = MissionContentSchema.safeParse(raw);
   if (parsed.success) return parsed.data;
-  return structuredClone(DEFAULT_ABOUT_CONTENT);
+  return structuredClone(DEFAULT_MISSION_CONTENT);
+}
+
+function parseContent(
+  slug: SupportedSlug,
+  raw: unknown
+): { ok: true; data: AboutPageContent | MissionPageContent } | { ok: false; error: z.ZodError } {
+  if (slug === 'about') {
+    const parsed = AboutContentSchema.safeParse(raw);
+    return parsed.success ? { ok: true, data: parsed.data } : { ok: false, error: parsed.error };
+  }
+  const parsed = MissionContentSchema.safeParse(raw);
+  return parsed.success ? { ok: true, data: parsed.data } : { ok: false, error: parsed.error };
 }
 
 type RouteCtx = { params: { slug: string } };
@@ -38,11 +91,11 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
   }
 
   if (!hasSupabaseConfig()) {
-    if (slug === 'about') {
+    if (isSupportedSlug(slug)) {
       return NextResponse.json({
         slug,
         status: 'published',
-        content: DEFAULT_ABOUT_CONTENT,
+        content: defaultFor(slug),
         source: 'default',
       });
     }
@@ -64,20 +117,31 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
     }
 
     if (!data) {
-      if (slug === 'about') {
+      if (isSupportedSlug(slug)) {
         return NextResponse.json({
           slug,
           status: 'published',
-          content: DEFAULT_ABOUT_CONTENT,
+          content: defaultFor(slug),
           source: 'default',
         });
       }
       return NextResponse.json({ error: '页面不存在' }, { status: 404 });
     }
 
+    if (!isSupportedSlug(slug)) {
+      return NextResponse.json({
+        slug: data.slug,
+        status: data.status,
+        content: session ? data.draft_content ?? data.content : data.content,
+        updated_at: data.updated_at,
+        updated_by: data.updated_by,
+        source: 'db',
+      });
+    }
+
     const content = session
-      ? normalizeAbout(data.draft_content ?? data.content)
-      : normalizeAbout(data.content);
+      ? normalizeContent(slug, data.draft_content ?? data.content)
+      : normalizeContent(slug, data.content);
 
     return NextResponse.json({
       slug: data.slug,
@@ -98,6 +162,9 @@ export async function PUT(req: NextRequest, ctx: RouteCtx) {
   if (!slug) {
     return NextResponse.json({ error: '缺少 slug' }, { status: 400 });
   }
+  if (!isSupportedSlug(slug)) {
+    return NextResponse.json({ error: `暂不支持编辑页面: ${slug}` }, { status: 400 });
+  }
 
   try {
     const session = await requireAdminSession();
@@ -107,8 +174,8 @@ export async function PUT(req: NextRequest, ctx: RouteCtx) {
 
     const body = await req.json();
     const mode = body?.mode === 'draft' ? 'draft' : 'publish';
-    const parsed = AboutContentSchema.safeParse(body?.content);
-    if (!parsed.success) {
+    const parsed = parseContent(slug, body?.content);
+    if (!parsed.ok) {
       return NextResponse.json(
         { error: '内容格式不正确', details: parsed.error.flatten() },
         { status: 400 }
@@ -142,7 +209,7 @@ export async function PUT(req: NextRequest, ctx: RouteCtx) {
       } else {
         const { error } = await supabase.from('pages').insert({
           slug,
-          content: slug === 'about' ? DEFAULT_ABOUT_CONTENT : content,
+          content: defaultFor(slug),
           draft_content: content,
           status: 'published',
           updated_at: now,
@@ -156,7 +223,6 @@ export async function PUT(req: NextRequest, ctx: RouteCtx) {
       return NextResponse.json({ ok: true, mode: 'draft', slug, updated_at: now });
     }
 
-    // publish：前台立刻读到新 content
     if (existing) {
       const { error } = await supabase
         .from('pages')

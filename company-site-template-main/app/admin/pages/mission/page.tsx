@@ -1,7 +1,7 @@
 'use client';
 
-import ModulePlaceholder from '@/components/admin/ModulePlaceholder';
+import MissionPageEditor from '@/components/admin/MissionPageEditor';
 
 export default function Page() {
-  return <ModulePlaceholder title="实力见证" />;
+  return <MissionPageEditor />;
 }

@@ -41,8 +41,8 @@ CREATE TABLE IF NOT EXISTS pages (
 );
 ```
 
-API：`GET/PUT /api/pages/[slug]`（PUT 需登录；`mode: draft|publish`）
-Seed：`npm run db:seed:about`
+API：`GET/PUT /api/pages/[slug]`（PUT 需登录；`mode: draft|publish`；已支持 `about` / `mission`）
+Seed：`npm run db:seed:about` / `npm run db:seed:mission`
 
 ### `about` 的 `content` 形状
 
@@ -52,6 +52,16 @@ Seed：`npm run db:seed:about`
 - `intro[]`: `{ title:{zh,en}, body:[{zh,en}, ...] }`
 - `network.items[]`: `{ zh, en }` × 5
 
+### `mission` 的 `content` 形状
+
+见 `company-site-template-main/lib/missionPageContent.ts`：
+
+- `header.title` / `header.subtitle`
+- `focus.label` / `focus.body`
+- `focus.cards[]`: `{ image, title:{zh,en}, caption:{zh,en} }`
+
+时间轴列表：`timeline_items` + `GET/POST /api/timeline` + `PUT/DELETE /api/timeline/[id]`
+
 ## 迁移命令
 
 ```bash
@@ -60,6 +70,7 @@ node scripts/db-migrate.mjs doc/sql/001_init_schema.sql
 node scripts/db-migrate.mjs doc/sql/002_admin_users.sql
 node scripts/db-migrate.mjs doc/sql/003_pages.sql
 npm run db:seed:about
+npm run db:seed:mission
 ```
 
 或 `npm run db:migrate -- doc/sql/003_pages.sql`

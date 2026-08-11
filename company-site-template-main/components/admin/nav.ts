@@ -8,10 +8,10 @@ export type AdminNavItem = {
 export const ADMIN_NAV: AdminNavItem[] = [
   { href: '/admin/pages/home', label: '首页', ready: false },
   { href: '/admin/pages/about', label: '关于我们', ready: true },
-  { href: '/admin/pages/mission', label: '实力见证', ready: false },
+  { href: '/admin/pages/mission', label: '实力见证', ready: true },
   { href: '/admin/pages/equipment', label: '装备清单', ready: false },
   { href: '/admin/news', label: '新闻', ready: true },
-  { href: '/admin/timeline', label: '时间轴', ready: false },
+  { href: '/admin/timeline', label: '时间轴', ready: true },
   { href: '/admin/equipment-items', label: '装备条目', ready: false },
   { href: '/admin/careers', label: '招聘', ready: true },
   { href: '/admin/settings', label: '站点设置', ready: false },
