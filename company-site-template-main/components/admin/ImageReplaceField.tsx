@@ -1,6 +1,7 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { createClient } from '@supabase/supabase-js';
 import { useAdminAuth } from './AdminAuthContext';
 import { compressImageForUpload } from '@/lib/compressImageForUpload';
 
@@ -11,6 +12,15 @@ type ImageReplaceFieldProps = {
   slot: string;
   onChange: (url: string) => void;
 };
+
+function getBrowserSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url || !key) throw new Error('缺少 Supabase 公开配置');
+  return createClient(url, key, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
 
 export default function ImageReplaceField({
   label = '图片',
@@ -29,26 +39,48 @@ export default function ImageReplaceField({
     setError(null);
     try {
       const compressed = await compressImageForUpload(file);
-      const fd = new FormData();
-      fd.set('file', compressed);
-      fd.set('slot', slot);
-      if (value) fd.set('previousUrl', value);
-      const res = await fetch('/api/upload', {
+
+      const prepRes = await fetch('/api/upload/prepare', {
         method: 'POST',
         credentials: 'include',
-        body: fd,
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ slot, mime: compressed.type }),
       });
-      const j = await res.json().catch(() => ({}));
-      if (res.status === 401) {
+      const prep = await prepRes.json().catch(() => ({}));
+      if (prepRes.status === 401) {
         await logout();
-        throw new Error(j?.error || '登录已过期，请重新登录');
+        throw new Error(prep?.error || '登录已过期，请重新登录');
       }
-      if (res.status === 413) {
-        throw new Error('图片过大（服务器限制约 4.5MB），请换较小的图');
+      if (!prepRes.ok) throw new Error(prep?.error || `准备上传失败（HTTP ${prepRes.status}）`);
+      if (!prep?.path || !prep?.token) throw new Error('未返回上传凭证');
+
+      const supabase = getBrowserSupabase();
+      const { error: upErr } = await supabase.storage
+        .from('media')
+        .uploadToSignedUrl(prep.path, prep.token, compressed, {
+          contentType: compressed.type,
+          upsert: true,
+        });
+      if (upErr) throw new Error(upErr.message || '直传失败');
+
+      const finRes = await fetch('/api/upload/finalize', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          slot,
+          path: prep.path,
+          previousUrl: value || undefined,
+        }),
+      });
+      const fin = await finRes.json().catch(() => ({}));
+      if (finRes.status === 401) {
+        await logout();
+        throw new Error(fin?.error || '登录已过期，请重新登录');
       }
-      if (!res.ok) throw new Error(j?.error || `上传失败（HTTP ${res.status}）`);
-      if (!j?.url) throw new Error('未返回图片地址');
-      onChange(String(j.url));
+      if (!finRes.ok) throw new Error(fin?.error || `完成上传失败（HTTP ${finRes.status}）`);
+      if (!fin?.url) throw new Error('未返回图片地址');
+      onChange(String(fin.url));
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '上传失败');
     } finally {
@@ -88,7 +120,7 @@ export default function ImageReplaceField({
             />
           </div>
           <p className="text-xs text-gray-500">
-            选图后会先在本地压成 WebP（长边≤1920）再上传；同槽覆盖旧文件，不会堆积。
+            本地压成 WebP 后直传云存储（上限约 15MB，不受 Vercel 4.5MB 限制）；同槽覆盖，不堆积。
           </p>
           {error && <span className="text-sm text-red-600">{error}</span>}
         </div>
