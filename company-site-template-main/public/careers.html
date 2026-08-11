@@ -970,10 +970,7 @@
 
       // 直接跳转到编辑页面（权限验证在编辑页面进行）
       window.openAdminPage = function () {
-        // 将 'cn' 映射成 Next 路由使用的 'zh'
-        const langSegment = (typeof currentLang !== 'undefined' && currentLang === 'en') ? 'en' : 'zh';
-        const adminUrl = `/${langSegment}/admin/careers`;
-        window.location.href = adminUrl;
+        window.location.href = '/admin';
       };
     })();
   </script>
