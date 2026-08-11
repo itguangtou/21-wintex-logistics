@@ -637,11 +637,8 @@
     //   }
 
       window.openAdminPage = function () {
-    // 将 'cn' 映射成 Next 路由使用的 'zh'
-        const langSegment = (typeof currentLang !== 'undefined' && currentLang === 'en') ? 'en' : 'zh';
-        const adminUrl = `/${langSegment}/admin/careers`;
-        window.open(adminUrl, '_blank');
-    };
+        window.location.href = '/admin';
+      };
     })();
   </script>
 </body>
