@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { promises as fs } from 'fs';
 import path from 'path';
 import { getSupabaseAdmin, hasSupabaseConfig } from '@/lib/supabase';
+import { requireAdminSession } from '@/lib/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -224,6 +225,15 @@ export async function GET() {
 }
 
 async function saveCareers(req: Request) {
+  try {
+    await requireAdminSession();
+  } catch (e: any) {
+    return NextResponse.json(
+      { ok: false, error: e?.message || '未登录或登录已过期' },
+      { status: e?.status || 401, headers: noStoreHeaders }
+    );
+  }
+
   try {
     const body = await req.json();
     const normalized = normalizeJobData(body);

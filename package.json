@@ -5,11 +5,15 @@
   "scripts": {
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:migrate:init": "node scripts/db-migrate.mjs doc/sql/001_init_schema.sql",
-    "db:seed:careers": "node scripts/seed-careers.mjs"
+    "db:seed:careers": "node scripts/seed-careers.mjs",
+    "db:seed:admin": "node scripts/seed-admin.mjs"
   },
   "devDependencies": {
     "@supabase/supabase-js": "^2.112.3",
     "dotenv": "^16.4.7",
     "pg": "^8.13.1"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3"
   }
 }

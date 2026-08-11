@@ -28,48 +28,73 @@ export default function CareersAdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [adminName, setAdminName] = useState<string | null>(null);
+  const [loggingIn, setLoggingIn] = useState(false);
 
   const lang = useMemo<'cn' | 'en'>(() => (locale === 'en' ? 'en' : 'cn'), [locale]);
 
-  // 检查权限
+  // 服务端 Cookie 会话校验
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const authStatus = sessionStorage.getItem('adminAuth');
-      const authTime = sessionStorage.getItem('adminAuthTime');
-      
-      // 检查认证状态和时效（30分钟）
-      if (authStatus === 'true' && authTime) {
-        const timeDiff = Date.now() - parseInt(authTime);
-        const thirtyMinutes = 30 * 60 * 1000;
-        
-        if (timeDiff < thirtyMinutes) {
+    let mounted = true;
+    (async () => {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include', cache: 'no-store' });
+        if (!mounted) return;
+        if (res.ok) {
+          const j = await res.json();
           setIsAuthenticated(true);
+          setAdminName(j?.user?.username || null);
         } else {
-          // 认证过期，清除状态
-          sessionStorage.removeItem('adminAuth');
-          sessionStorage.removeItem('adminAuthTime');
+          setIsAuthenticated(false);
+          setAdminName(null);
         }
+      } catch {
+        if (!mounted) return;
+        setIsAuthenticated(false);
+      } finally {
+        if (mounted) setAuthChecking(false);
       }
-    }
+    })();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // 处理登录
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === 'wintex' && password === 'wintex2025') {
-      sessionStorage.setItem('adminAuth', 'true');
-      sessionStorage.setItem('adminAuthTime', Date.now().toString());
+    setLoggingIn(true);
+    setAuthError(null);
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ username, password }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(j?.error || '登录失败');
+      }
       setIsAuthenticated(true);
-      setAuthError(null);
+      setAdminName(j?.user?.username || username);
       setUsername('');
       setPassword('');
-    } else {
-      setAuthError('用户名或密码错误，请重试');
+    } catch (err: any) {
+      setAuthError(err?.message || '用户名或密码错误，请重试');
       setPassword('');
+    } finally {
+      setLoggingIn(false);
     }
+  };
+
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+    setIsAuthenticated(false);
+    setAdminName(null);
   };
 
   // 将HTML转换为纯文本（用于编辑显示）
@@ -141,7 +166,7 @@ export default function CareersAdminPage() {
     (async () => {
       setError(null);
       try {
-        const res = await fetch('/api/careers', { cache: 'no-store' });
+        const res = await fetch('/api/careers', { cache: 'no-store', credentials: 'include' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as CareersData;
 
@@ -283,6 +308,7 @@ export default function CareersAdminPage() {
         res = await fetch('/api/careers', {
           method: 'PUT',
           headers: { 'content-type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify(dataToPublish),
         });
         
@@ -291,6 +317,7 @@ export default function CareersAdminPage() {
           res = await fetch('/api/careers', {
             method: 'POST',
             headers: { 'content-type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify(dataToPublish),
           });
         }
@@ -299,12 +326,17 @@ export default function CareersAdminPage() {
         res = await fetch('/api/careers', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify(dataToPublish),
         });
       }
       
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
+        if (res.status === 401) {
+          setIsAuthenticated(false);
+          throw new Error(j?.error || '登录已过期，请重新登录');
+        }
         throw new Error(j?.error || `HTTP ${res.status}`);
       }
   
@@ -326,6 +358,14 @@ export default function CareersAdminPage() {
       setSaving(false);
     }
   };
+
+  if (authChecking) {
+    return (
+      <main className="min-h-screen flex items-center justify-center p-4">
+        <p className="text-gray-600">正在验证登录状态…</p>
+      </main>
+    );
+  }
 
   // 权限验证页面
   if (!isAuthenticated) {
@@ -395,9 +435,10 @@ export default function CareersAdminPage() {
 
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              disabled={loggingIn}
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-indigo-700 transition shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:opacity-50"
             >
-              登录
+              {loggingIn ? '登录中…' : '登录'}
             </button>
           </form>
         </div>
@@ -416,9 +457,21 @@ export default function CareersAdminPage() {
 
   return (
     <main className="container mx-auto p-6">
-      <header className="mb-6 flex items-center gap-3">
-        <h1 className="text-2xl font-bold">Careers 管理</h1>
-        {error && <span className="text-xs text-red-600">{error}</span>}
+      <header className="mb-6 flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">Careers 管理</h1>
+          {error && <span className="text-xs text-red-600">{error}</span>}
+        </div>
+        <div className="flex items-center gap-3 text-sm">
+          {adminName && <span className="text-gray-600">已登录：{adminName}</span>}
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="px-3 py-1.5 rounded-lg border hover:bg-gray-50"
+          >
+            退出登录
+          </button>
+        </div>
       </header>
 
       <section className="grid gap-6">
