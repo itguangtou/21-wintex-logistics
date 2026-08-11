@@ -160,7 +160,7 @@ export default function AdminSidebar() {
   const byHref = Object.fromEntries(ADMIN_NAV.map((item) => [item.href, item]));
 
   return (
-    <aside className="hidden md:flex w-60 shrink-0 flex-col bg-[#0E2745] text-white">
+    <aside className="hidden md:flex w-60 shrink-0 flex-col h-screen min-h-0 bg-[#0E2745] text-white">
       <div className="h-14 flex items-center gap-3 px-5 border-b border-white/10">
         <img src="/images/wintex-logo.png" alt="Wintex" className="h-7 brightness-0 invert" />
         <div className="leading-tight min-w-0">

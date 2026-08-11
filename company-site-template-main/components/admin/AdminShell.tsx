@@ -37,12 +37,12 @@ function MobileNav() {
 export default function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <AdminChromeProvider>
-      <div className="min-h-screen flex bg-[#F5F7FA]">
+      <div className="h-screen overflow-hidden flex bg-[#F5F7FA]">
         <AdminSidebar />
-        <div className="flex-1 flex flex-col min-w-0 min-h-screen">
+        <div className="flex-1 flex flex-col min-w-0 min-h-0 h-screen overflow-hidden">
           <AdminHeader />
           <MobileNav />
-          <main className="flex-1 overflow-auto">{children}</main>
+          <main className="flex-1 min-h-0 overflow-y-auto">{children}</main>
           <AdminFooter />
         </div>
       </div>
