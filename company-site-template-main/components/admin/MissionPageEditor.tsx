@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import BilingualField from './BilingualField';
+import ImageReplaceField from './ImageReplaceField';
 import { useAdminChrome } from './AdminChromeContext';
 import { useAdminAuth } from './AdminAuthContext';
 import {
@@ -74,7 +75,7 @@ export default function MissionPageEditor() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setSubtitle('编辑页头、聚焦文案与项目卡片；时间轴请到「时间轴」模块');
+    setSubtitle('编辑页头、聚焦与项目卡片（可本地选图替换）；时间轴请到「时间轴」模块');
     let mounted = true;
     (async () => {
       setLoading(true);
@@ -235,15 +236,12 @@ export default function MissionPageEditor() {
                 open={open}
                 onToggle={() => setOpenCards((prev) => ({ ...prev, [i]: !prev[i] }))}
               >
-                <label className="grid gap-1">
-                  <span className="text-sm font-medium text-gray-700">图片 URL</span>
-                  <input
-                    className="border rounded-lg px-3 py-2 text-sm w-full outline-none focus:border-[#0E2745] focus:ring-2 focus:ring-[#0E2745]/15"
-                    value={card.image}
-                    onChange={(e) => patchCardImage(i, e.target.value)}
-                    placeholder="/highresolution/..."
-                  />
-                </label>
+                <ImageReplaceField
+                  label="项目图片"
+                  value={card.image}
+                  slot={`pages/mission/card-${i}`}
+                  onChange={(url) => patchCardImage(i, url)}
+                />
                 <BilingualField
                   label="标题"
                   zh={card.title.zh}
