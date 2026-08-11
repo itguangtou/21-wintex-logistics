@@ -1,7 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
+import React, { useCallback, useEffect, useState } from 'react';
 import BilingualField from './BilingualField';
 import ImageReplaceField from './ImageReplaceField';
 import { useAdminChrome } from './AdminChromeContext';
@@ -10,6 +9,7 @@ import {
   DEFAULT_MISSION_CONTENT,
   type LocaleText,
   type MissionPageContent,
+  type TimelineItemRow,
 } from '@/lib/missionPageContent';
 
 function cloneDefault(): MissionPageContent {
@@ -39,52 +39,97 @@ function AccordionItem({
   name,
   open,
   onToggle,
+  actions,
   children,
 }: {
   name: string;
   open: boolean;
   onToggle: () => void;
+  actions?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <li className="border-b border-gray-100 last:border-0">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-gray-50 transition-colors"
-        aria-expanded={open}
-      >
-        <Chevron open={open} />
-        <span className="text-sm font-medium text-gray-800 truncate">{name}</span>
-      </button>
+      <div className="flex items-stretch">
+        <button
+          type="button"
+          onClick={onToggle}
+          className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3.5 text-left hover:bg-gray-50 transition-colors"
+          aria-expanded={open}
+        >
+          <Chevron open={open} />
+          <span className="text-sm font-medium text-gray-800 truncate">{name}</span>
+        </button>
+        {actions && <div className="flex items-center gap-2 px-3 shrink-0">{actions}</div>}
+      </div>
       {open && <div className="px-4 pb-5 pt-1 space-y-4 bg-gray-50/40 border-t border-gray-100">{children}</div>}
     </li>
   );
+}
+
+type TimelineDraft = {
+  year: string;
+  project_name_zh: string;
+  project_name_en: string;
+  description_zh: string;
+  description_en: string;
+  sort_order: number;
+};
+
+function rowToDraft(row: TimelineItemRow): TimelineDraft {
+  return {
+    year: row.year,
+    project_name_zh: row.project_name_zh,
+    project_name_en: row.project_name_en,
+    description_zh: row.description_zh,
+    description_en: row.description_en,
+    sort_order: row.sort_order ?? 0,
+  };
 }
 
 export default function MissionPageEditor() {
   const { setSubtitle } = useAdminChrome();
   const { logout } = useAdminAuth();
   const [data, setData] = useState<MissionPageContent | null>(null);
+  const [timeline, setTimeline] = useState<TimelineItemRow[]>([]);
+  const [timelineDrafts, setTimelineDrafts] = useState<Record<number, TimelineDraft>>({});
   const [openHeader, setOpenHeader] = useState(true);
-  const [openFocus, setOpenFocus] = useState(true);
-  const [openCards, setOpenCards] = useState<Record<number, boolean>>({ 0: true, 1: true });
+  const [openFocus, setOpenFocus] = useState(false);
+  const [openCards, setOpenCards] = useState<Record<number, boolean>>({});
+  const [openTimeline, setOpenTimeline] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [timelineBusy, setTimelineBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const loadTimeline = useCallback(async () => {
+    const res = await fetch('/api/timeline', { credentials: 'include', cache: 'no-store' });
+    const j = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(j?.error || `时间轴 HTTP ${res.status}`);
+    const items = (Array.isArray(j.items) ? j.items : []) as TimelineItemRow[];
+    setTimeline(items);
+    const drafts: Record<number, TimelineDraft> = {};
+    for (const row of items) drafts[row.id] = rowToDraft(row);
+    setTimelineDrafts(drafts);
+  }, []);
+
   useEffect(() => {
-    setSubtitle('编辑页头、聚焦与项目卡片（可本地选图替换）；时间轴请到「时间轴」模块');
+    setSubtitle('按前台顺序编辑：页头 → 时间轴 → 聚焦 → 项目卡片');
     let mounted = true;
     (async () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch('/api/pages/mission', { credentials: 'include', cache: 'no-store' });
-        const j = await res.json().catch(() => ({}));
+        const [pageRes] = await Promise.all([
+          fetch('/api/pages/mission', { credentials: 'include', cache: 'no-store' }),
+          loadTimeline().catch((e) => {
+            throw e;
+          }),
+        ]);
+        const j = await pageRes.json().catch(() => ({}));
         if (!mounted) return;
-        if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
+        if (!pageRes.ok) throw new Error(j?.error || `HTTP ${pageRes.status}`);
         setData(j.content ? structuredClone(j.content) : cloneDefault());
       } catch (e: unknown) {
         if (!mounted) return;
@@ -98,7 +143,7 @@ export default function MissionPageEditor() {
       mounted = false;
       setSubtitle(null);
     };
-  }, [setSubtitle]);
+  }, [setSubtitle, loadTimeline]);
 
   const save = async (mode: 'draft' | 'publish') => {
     if (!data) return;
@@ -118,7 +163,7 @@ export default function MissionPageEditor() {
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
       if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
-      setMessage(mode === 'draft' ? '草稿已保存（仅后台可见）' : '已发布，前台实力见证页已更新');
+      setMessage(mode === 'draft' ? '页头/聚焦/卡片草稿已保存' : '页头/聚焦/卡片已发布');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '保存失败');
     } finally {
@@ -148,6 +193,128 @@ export default function MissionPageEditor() {
     });
   };
 
+  const patchTimelineDraft = (id: number, patch: Partial<TimelineDraft>) => {
+    setTimelineDrafts((prev) => {
+      const base =
+        prev[id] ||
+        (() => {
+          const row = timeline.find((t) => t.id === id);
+          return row
+            ? rowToDraft(row)
+            : {
+                year: '',
+                project_name_zh: '',
+                project_name_en: '',
+                description_zh: '',
+                description_en: '',
+                sort_order: 0,
+              };
+        })();
+      return { ...prev, [id]: { ...base, ...patch } };
+    });
+  };
+
+  const saveTimelineItem = async (id: number) => {
+    const draft = timelineDrafts[id];
+    if (!draft) return;
+    if (!draft.year.trim()) {
+      setError('年份不能为空');
+      return;
+    }
+    setTimelineBusy(true);
+    setMessage(null);
+    setError(null);
+    try {
+      const res = await fetch(`/api/timeline/${id}`, {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(draft),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        await logout();
+        throw new Error(j?.error || '登录已过期，请重新登录');
+      }
+      if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
+      setMessage('时间轴条目已保存（前台立即生效）');
+      await loadTimeline();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : '时间轴保存失败');
+    } finally {
+      setTimelineBusy(false);
+    }
+  };
+
+  const addTimelineItem = async () => {
+    setTimelineBusy(true);
+    setMessage(null);
+    setError(null);
+    try {
+      const maxSort = timeline.reduce((m, r) => Math.max(m, r.sort_order ?? 0), 0);
+      const res = await fetch('/api/timeline', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          year: new Date().getFullYear().toString(),
+          project_name_zh: '新项目',
+          project_name_en: 'New Project',
+          description_zh: '',
+          description_en: '',
+          sort_order: maxSort + 10,
+        }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        await logout();
+        throw new Error(j?.error || '登录已过期，请重新登录');
+      }
+      if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
+      const newId = Number(j?.item?.id);
+      setMessage('已新增时间轴条目');
+      await loadTimeline();
+      if (Number.isFinite(newId) && newId > 0) {
+        setOpenTimeline((prev) => ({ ...prev, [newId]: true }));
+      }
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : '新增失败');
+    } finally {
+      setTimelineBusy(false);
+    }
+  };
+
+  const deleteTimelineItem = async (row: TimelineItemRow) => {
+    if (row.id <= 0) {
+      setError('默认占位数据不可删除');
+      return;
+    }
+    if (!window.confirm(`确定删除「${row.year} · ${row.project_name_zh || row.project_name_en}」？`)) {
+      return;
+    }
+    setTimelineBusy(true);
+    setMessage(null);
+    setError(null);
+    try {
+      const res = await fetch(`/api/timeline/${row.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const j = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        await logout();
+        throw new Error(j?.error || '登录已过期，请重新登录');
+      }
+      if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
+      setMessage('已删除时间轴条目');
+      await loadTimeline();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : '删除失败');
+    } finally {
+      setTimelineBusy(false);
+    }
+  };
+
   if (loading || !data) {
     return <div className="p-8 text-sm text-gray-500">加载中…</div>;
   }
@@ -171,15 +338,14 @@ export default function MissionPageEditor() {
         >
           {saving ? '发布中…' : '保存并发布'}
         </button>
-        <Link href="/admin/timeline" className="text-sm text-[#0E2745] hover:underline ml-1">
-          编辑时间轴 →
-        </Link>
+        <span className="text-xs text-gray-400">时间轴条目单独保存，立即生效</span>
         {message && <span className="text-sm text-emerald-700">{message}</span>}
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>
 
+      {/* 1. 页头 */}
       <section>
-        <h2 className="text-base font-semibold text-[#0E2745] mb-3">页头</h2>
+        <h2 className="text-base font-semibold text-[#0E2745] mb-3">1. 页头</h2>
         <ul className="rounded-xl border border-gray-200 bg-white overflow-hidden">
           <AccordionItem name="标题与副标题" open={openHeader} onToggle={() => setOpenHeader((v) => !v)}>
             <BilingualField
@@ -200,8 +366,101 @@ export default function MissionPageEditor() {
         </ul>
       </section>
 
+      {/* 2. 时间轴 */}
       <section>
-        <h2 className="text-base font-semibold text-[#0E2745] mb-3">聚焦文案</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+          <h2 className="text-base font-semibold text-[#0E2745]">2. 时间轴</h2>
+          <button
+            type="button"
+            disabled={timelineBusy}
+            onClick={() => void addTimelineItem()}
+            className="h-9 px-3 rounded-lg bg-[#0E2745] text-white text-sm hover:bg-[#163a5f] disabled:opacity-50"
+          >
+            新增条目
+          </button>
+        </div>
+        <ul className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+          {timeline.length === 0 ? (
+            <li className="px-4 py-10 text-center text-sm text-gray-400">暂无条目，点击「新增条目」</li>
+          ) : (
+            timeline.map((row) => {
+              const draft = timelineDrafts[row.id] || rowToDraft(row);
+              const open = !!openTimeline[row.id];
+              const name = `${row.year} · ${row.project_name_zh || row.project_name_en || '未命名'}`;
+              return (
+                <AccordionItem
+                  key={row.id}
+                  name={name}
+                  open={open}
+                  onToggle={() => setOpenTimeline((prev) => ({ ...prev, [row.id]: !prev[row.id] }))}
+                  actions={
+                    <button
+                      type="button"
+                      disabled={timelineBusy}
+                      className="text-sm text-red-600 hover:underline disabled:opacity-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void deleteTimelineItem(row);
+                      }}
+                    >
+                      删除
+                    </button>
+                  }
+                >
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <label className="grid gap-1">
+                      <span className="text-sm font-medium text-gray-700">年份</span>
+                      <input
+                        className="border rounded-lg px-3 py-2 text-sm outline-none focus:border-[#0E2745] focus:ring-2 focus:ring-[#0E2745]/15"
+                        value={draft.year}
+                        onChange={(e) => patchTimelineDraft(row.id, { year: e.target.value })}
+                      />
+                    </label>
+                    <label className="grid gap-1">
+                      <span className="text-sm font-medium text-gray-700">排序</span>
+                      <input
+                        type="number"
+                        className="border rounded-lg px-3 py-2 text-sm outline-none focus:border-[#0E2745] focus:ring-2 focus:ring-[#0E2745]/15"
+                        value={draft.sort_order}
+                        onChange={(e) =>
+                          patchTimelineDraft(row.id, { sort_order: Number(e.target.value) || 0 })
+                        }
+                      />
+                    </label>
+                  </div>
+                  <BilingualField
+                    label="项目名称"
+                    zh={draft.project_name_zh}
+                    en={draft.project_name_en}
+                    onZhChange={(v) => patchTimelineDraft(row.id, { project_name_zh: v })}
+                    onEnChange={(v) => patchTimelineDraft(row.id, { project_name_en: v })}
+                  />
+                  <BilingualField
+                    label="描述"
+                    zh={draft.description_zh}
+                    en={draft.description_en}
+                    multiline
+                    onZhChange={(v) => patchTimelineDraft(row.id, { description_zh: v })}
+                    onEnChange={(v) => patchTimelineDraft(row.id, { description_en: v })}
+                  />
+                  <button
+                    type="button"
+                    disabled={timelineBusy}
+                    onClick={() => void saveTimelineItem(row.id)}
+                    className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    保存本条
+                  </button>
+                </AccordionItem>
+              );
+            })
+          )}
+        </ul>
+      </section>
+
+      {/* 3. 聚焦 */}
+      <section>
+        <h2 className="text-base font-semibold text-[#0E2745] mb-3">3. 聚焦文案</h2>
         <ul className="rounded-xl border border-gray-200 bg-white overflow-hidden">
           <AccordionItem name="聚焦标签与正文" open={openFocus} onToggle={() => setOpenFocus((v) => !v)}>
             <BilingualField
@@ -223,8 +482,9 @@ export default function MissionPageEditor() {
         </ul>
       </section>
 
+      {/* 4. 项目卡片 */}
       <section>
-        <h2 className="text-base font-semibold text-[#0E2745] mb-3">项目卡片</h2>
+        <h2 className="text-base font-semibold text-[#0E2745] mb-3">4. 项目卡片</h2>
         <ul className="rounded-xl border border-gray-200 bg-white overflow-hidden">
           {data.focus.cards.map((card, i) => {
             const open = !!openCards[i];

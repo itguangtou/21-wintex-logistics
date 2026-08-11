@@ -23,7 +23,7 @@ const NAV_GROUPS: { title: string; hrefs: string[] }[] = [
   },
   {
     title: '内容',
-    hrefs: ['/admin/news', '/admin/timeline', '/admin/equipment-items', '/admin/careers'],
+    hrefs: ['/admin/news', '/admin/equipment-items', '/admin/careers'],
   },
   {
     title: '系统',
