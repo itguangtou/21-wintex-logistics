@@ -1,5 +1,5 @@
 /**
- * 建表 + 插入初始管理员 wintex / wintex2025（role=admin）
+ * 建表 + 插入初始管理员 wintex / wintex2026（role=admin）
  * 用法：node scripts/seed-admin.mjs
  */
 import bcrypt from 'bcryptjs';
@@ -41,7 +41,7 @@ await client.end();
 
 // 2) 插入/更新初始用户
 const username = process.env.SEED_ADMIN_USERNAME || 'wintex';
-const password = process.env.SEED_ADMIN_PASSWORD || 'wintex2025';
+const password = process.env.SEED_ADMIN_PASSWORD || 'wintex2026';
 const role = 'admin';
 const password_hash = await bcrypt.hash(password, 10);
 
