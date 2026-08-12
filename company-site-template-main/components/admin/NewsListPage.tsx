@@ -67,6 +67,10 @@ export default function NewsListPage() {
     setBusy(true);
     setError(null);
     try {
+      const today = new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const published_at = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+
       const res = await fetch('/api/news', {
         method: 'POST',
         credentials: 'include',
@@ -76,7 +80,8 @@ export default function NewsListPage() {
           title_en: 'New Article',
           content_zh: '',
           content_en: '',
-          image_url: '/news4.png',
+          image_url: '',
+          published_at,
           is_published: true,
         }),
       });
