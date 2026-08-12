@@ -9,6 +9,7 @@
     "db:seed:admin": "node scripts/seed-admin.mjs",
     "db:seed:about": "node scripts/seed-about-page.mjs",
     "db:seed:mission": "node scripts/seed-mission.mjs",
+    "db:seed:news": "node scripts/seed-news.mjs",
     "db:ensure:media": "node scripts/ensure-media-bucket.mjs"
   },
   "devDependencies": {
