@@ -7,6 +7,12 @@ type BilingualFieldProps = {
   onZhChange: (v: string) => void;
   onEnChange: (v: string) => void;
   multiline?: boolean;
+  /** textarea 行数提示（仅 multiline） */
+  rows?: number;
+  /** 额外最小高度 class，如 min-h-[320px] */
+  minHeightClass?: string;
+  /** 上下排布（适合长正文），默认左右两列 */
+  stacked?: boolean;
   zhPlaceholder?: string;
   enPlaceholder?: string;
 };
@@ -18,24 +24,30 @@ export default function BilingualField({
   onZhChange,
   onEnChange,
   multiline,
+  rows = 4,
+  minHeightClass,
+  stacked,
   zhPlaceholder,
   enPlaceholder,
 }: BilingualFieldProps) {
   const Input = multiline ? 'textarea' : 'input';
   const shared =
     'border rounded-lg px-3 py-2 text-sm w-full outline-none focus:border-[#0E2745] focus:ring-2 focus:ring-[#0E2745]/15' +
-    (multiline ? ' min-h-[100px] resize-y' : '');
+    (multiline ? ` resize-y ${minHeightClass || 'min-h-[100px]'}` : '');
 
   return (
     <div className="grid gap-2">
       <span className="text-sm font-medium text-gray-700">{label}</span>
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className={stacked ? 'grid gap-4' : 'grid md:grid-cols-2 gap-4'}>
         <label className="grid gap-1">
           <span className="text-xs text-gray-500">中文</span>
           <Input
             className={shared}
             value={zh}
-            onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onZhChange(e.target.value)}
+            rows={multiline ? rows : undefined}
+            onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+              onZhChange(e.target.value)
+            }
             placeholder={zhPlaceholder}
           />
         </label>
@@ -44,7 +56,10 @@ export default function BilingualField({
           <Input
             className={shared}
             value={en}
-            onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onEnChange(e.target.value)}
+            rows={multiline ? rows : undefined}
+            onChange={(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+              onEnChange(e.target.value)
+            }
             placeholder={enPlaceholder}
           />
         </label>
