@@ -65,6 +65,7 @@ export default function EquipmentPageEditor() {
   const { setSubtitle } = useAdminChrome();
   const { logout } = useAdminAuth();
   const [data, setData] = useState<EquipmentPageContent | null>(null);
+  const [openHeader, setOpenHeader] = useState(false);
   const [openGallery, setOpenGallery] = useState<Record<number, boolean>>({});
   const [openM1R1, setOpenM1R1] = useState<Record<number, boolean>>({});
   const [openM1R2, setOpenM1R2] = useState<Record<number, boolean>>({});
