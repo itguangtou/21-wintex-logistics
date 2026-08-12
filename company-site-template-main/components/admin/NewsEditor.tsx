@@ -117,7 +117,7 @@ export default function NewsEditor() {
           const list = await listRes.json().catch(() => ({}));
           if (!mounted) return;
           if (listRes.status === 401) {
-            await logout();
+            await logout({ reason: 'expired' });
             throw new Error(list?.error || '登录已过期');
           }
           const count = Array.isArray(list?.items) ? list.items.length : 0;
@@ -142,7 +142,7 @@ export default function NewsEditor() {
           const detail = await detailRes.json().catch(() => ({}));
           if (!mounted) return;
           if (detailRes.status === 401) {
-            await logout();
+            await logout({ reason: 'expired' });
             throw new Error(detail?.error || '登录已过期');
           }
           if (!detailRes.ok) throw new Error(detail?.error || '加载失败，请刷新页面');
@@ -203,7 +203,7 @@ export default function NewsEditor() {
         });
         const j = await res.json().catch(() => ({}));
         if (res.status === 401) {
-          await logout();
+          await logout({ reason: 'expired' });
           throw new Error(j?.error || '登录已过期，请重新登录');
         }
         if (!res.ok) throw new Error(j?.error || '保存失败，请稍后重试');
@@ -223,7 +223,7 @@ export default function NewsEditor() {
       });
       const j = await res.json().catch(() => ({}));
       if (res.status === 401) {
-        await logout();
+        await logout({ reason: 'expired' });
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
       if (!res.ok) throw new Error(j?.error || '保存失败，请稍后重试');

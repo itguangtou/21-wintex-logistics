@@ -2,9 +2,11 @@
 
 import React, { useState } from 'react';
 import { useAdminAuth } from './AdminAuthContext';
+import { useAdminMessage } from './AdminMessage';
 
 export default function AdminLogin() {
   const { login } = useAdminAuth();
+  const message = useAdminMessage();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState<string | null>(null);
@@ -19,8 +21,9 @@ export default function AdminLogin() {
       setUsername('');
       setPassword('');
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : '用户名或密码错误，请重试';
-      setAuthError(message);
+      const msg = err instanceof Error ? err.message : '用户名或密码错误，请重试';
+      setAuthError(msg);
+      message.error(msg);
       setPassword('');
     } finally {
       setLoggingIn(false);

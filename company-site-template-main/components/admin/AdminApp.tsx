@@ -12,7 +12,14 @@ export default function AdminApp({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!checking && user && pathname === '/admin') {
+    if (checking) return;
+    if (!user) {
+      if (pathname !== '/admin') {
+        router.replace('/admin');
+      }
+      return;
+    }
+    if (pathname === '/admin') {
       router.replace('/admin/news');
     }
   }, [checking, user, pathname, router]);

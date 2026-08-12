@@ -48,7 +48,7 @@ export default function ImageReplaceField({
       });
       const prep = await prepRes.json().catch(() => ({}));
       if (prepRes.status === 401) {
-        await logout();
+        await logout({ reason: 'expired' });
         throw new Error(prep?.error || '登录已过期，请重新登录');
       }
       if (!prepRes.ok) throw new Error(prep?.error || '上传准备失败，请稍后重试');
@@ -75,7 +75,7 @@ export default function ImageReplaceField({
       });
       const fin = await finRes.json().catch(() => ({}));
       if (finRes.status === 401) {
-        await logout();
+        await logout({ reason: 'expired' });
         throw new Error(fin?.error || '登录已过期，请重新登录');
       }
       if (!finRes.ok) throw new Error(fin?.error || '上传失败，请稍后重试');

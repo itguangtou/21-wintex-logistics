@@ -125,7 +125,7 @@ export default function TimelineListPage() {
       });
       const j = await res.json().catch(() => ({}));
       if (res.status === 401) {
-        await logout();
+        await logout({ reason: 'expired' });
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
       if (!res.ok) throw new Error(j?.error || '操作失败，请稍后重试');
@@ -157,7 +157,7 @@ export default function TimelineListPage() {
       });
       const j = await res.json().catch(() => ({}));
       if (res.status === 401) {
-        await logout();
+        await logout({ reason: 'expired' });
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
       if (!res.ok) throw new Error(j?.error || '操作失败，请稍后重试');

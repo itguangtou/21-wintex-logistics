@@ -4,7 +4,9 @@ import { cookies } from 'next/headers';
 import { getSupabaseAdmin } from '@/lib/supabase';
 
 export const ADMIN_SESSION_COOKIE = 'wintex_admin_session';
-const SESSION_DAYS = 7;
+/** 空闲滑动过期：距最后一次鉴权请求超过 1 天则失效 */
+export const SESSION_IDLE_SECONDS = 24 * 60 * 60;
+const SESSION_IDLE_MS = SESSION_IDLE_SECONDS * 1000;
 
 export type AdminSession = {
   userId: string;
@@ -33,7 +35,7 @@ function signPayload(payloadBase64: string): string {
 export function createSessionToken(session: Omit<AdminSession, 'exp'>): string {
   const full: AdminSession = {
     ...session,
-    exp: Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000,
+    exp: Date.now() + SESSION_IDLE_MS,
   };
   const payload = Buffer.from(JSON.stringify(full), 'utf8').toString('base64url');
   const sig = signPayload(payload);
@@ -63,11 +65,6 @@ export function verifySessionToken(token: string | undefined | null): AdminSessi
   }
 }
 
-export async function getAdminSession(): Promise<AdminSession | null> {
-  const jar = cookies();
-  return verifySessionToken(jar.get(ADMIN_SESSION_COOKIE)?.value);
-}
-
 export function sessionCookieOptions(maxAgeSeconds: number) {
   return {
     httpOnly: true as const,
@@ -76,6 +73,36 @@ export function sessionCookieOptions(maxAgeSeconds: number) {
     path: '/',
     maxAge: maxAgeSeconds,
   };
+}
+
+/** 滑动续期：重签 token 并写回 Cookie */
+export function touchAdminSession(session: AdminSession): AdminSession {
+  const token = createSessionToken({
+    userId: session.userId,
+    username: session.username,
+    role: session.role,
+  });
+  const jar = cookies();
+  jar.set(ADMIN_SESSION_COOKIE, token, sessionCookieOptions(SESSION_IDLE_SECONDS));
+  return {
+    userId: session.userId,
+    username: session.username,
+    role: session.role,
+    exp: Date.now() + SESSION_IDLE_MS,
+  };
+}
+
+export async function getAdminSession(): Promise<AdminSession | null> {
+  const jar = cookies();
+  const session = verifySessionToken(jar.get(ADMIN_SESSION_COOKIE)?.value);
+  if (!session) return null;
+  try {
+    return touchAdminSession(session);
+  } catch (e) {
+    // 部分只读上下文可能无法 set cookie，仍返回已校验会话
+    console.warn('[auth] touchAdminSession failed', e);
+    return session;
+  }
 }
 
 export async function verifyPassword(

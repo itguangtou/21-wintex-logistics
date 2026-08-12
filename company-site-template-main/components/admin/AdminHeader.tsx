@@ -21,7 +21,7 @@ export default function AdminHeader() {
         {user?.username && <span className="hidden sm:inline text-gray-500">{user.username}</span>}
         <button
           type="button"
-          onClick={() => void logout()}
+          onClick={() => void logout({ reason: 'manual' })}
           className="px-3 py-1.5 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 text-xs"
         >
           退出

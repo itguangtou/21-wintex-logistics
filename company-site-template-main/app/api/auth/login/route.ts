@@ -5,6 +5,7 @@ import {
   createSessionToken,
   findAdminByUsername,
   sessionCookieOptions,
+  SESSION_IDLE_SECONDS,
   verifyPassword,
 } from '@/lib/auth';
 
@@ -50,7 +51,7 @@ export async function POST(req: Request) {
     res.cookies.set(
       ADMIN_SESSION_COOKIE,
       token,
-      sessionCookieOptions(7 * 24 * 60 * 60)
+      sessionCookieOptions(SESSION_IDLE_SECONDS)
     );
     return res;
   } catch (e: any) {

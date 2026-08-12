@@ -33,7 +33,7 @@ export default function NewsListPage() {
       const res = await fetch('/api/news?all=1', { credentials: 'include', cache: 'no-store' });
       const j = await res.json().catch(() => ({}));
       if (res.status === 401) {
-        await logout();
+        await logout({ reason: 'expired' });
         throw new Error(j?.error || '登录已过期');
       }
       if (!res.ok) throw new Error(j?.error || '操作失败，请稍后重试');
@@ -105,7 +105,7 @@ export default function NewsListPage() {
       });
       const j = await res.json().catch(() => ({}));
       if (res.status === 401) {
-        await logout();
+        await logout({ reason: 'expired' });
         throw new Error(j?.error || '登录已过期');
       }
       if (!res.ok) throw new Error(j?.error || '操作失败，请稍后重试');
@@ -131,7 +131,7 @@ export default function NewsListPage() {
       });
       const j = await res.json().catch(() => ({}));
       if (res.status === 401) {
-        await logout();
+        await logout({ reason: 'expired' });
         throw new Error(j?.error || '登录已过期');
       }
       if (!res.ok) throw new Error(j?.error || '操作失败，请稍后重试');
