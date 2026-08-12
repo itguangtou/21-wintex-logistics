@@ -4,6 +4,10 @@ import { getSupabaseAdmin, hasSupabaseConfig } from '@/lib/supabase';
 import { getAdminSession, requireAdminSession } from '@/lib/auth';
 import { DEFAULT_ABOUT_CONTENT, type AboutPageContent } from '@/lib/aboutPageContent';
 import { DEFAULT_MISSION_CONTENT, type MissionPageContent } from '@/lib/missionPageContent';
+import {
+  DEFAULT_EQUIPMENT_CONTENT,
+  type EquipmentPageContent,
+} from '@/lib/equipmentPageContent';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -44,41 +48,73 @@ const MissionContentSchema = z.object({
   }),
 });
 
-type SupportedSlug = 'about' | 'mission';
+const DetailCardSchema = z.object({
+  title: LocaleTextSchema,
+  desc: LocaleTextSchema,
+});
+
+const EquipmentContentSchema = z.object({
+  pageTitle: LocaleTextSchema,
+  gallery: z
+    .array(
+      z.object({
+        image: z.string(),
+        name: LocaleTextSchema,
+      })
+    )
+    .length(4),
+  detailModule1: z.object({
+    row1: z.array(DetailCardSchema).length(3),
+    row2: z.array(DetailCardSchema).length(2),
+  }),
+  detailModule2: z.object({
+    row1: z.array(DetailCardSchema).length(2),
+    row2: z.array(DetailCardSchema).length(2),
+  }),
+});
+
+type SupportedSlug = 'about' | 'mission' | 'equipment';
+type PageContent = AboutPageContent | MissionPageContent | EquipmentPageContent;
 
 function isSupportedSlug(slug: string): slug is SupportedSlug {
-  return slug === 'about' || slug === 'mission';
+  return slug === 'about' || slug === 'mission' || slug === 'equipment';
 }
 
-function defaultFor(slug: SupportedSlug): AboutPageContent | MissionPageContent {
-  return slug === 'about'
-    ? structuredClone(DEFAULT_ABOUT_CONTENT)
-    : structuredClone(DEFAULT_MISSION_CONTENT);
+function defaultFor(slug: SupportedSlug): PageContent {
+  if (slug === 'about') return structuredClone(DEFAULT_ABOUT_CONTENT);
+  if (slug === 'mission') return structuredClone(DEFAULT_MISSION_CONTENT);
+  return structuredClone(DEFAULT_EQUIPMENT_CONTENT);
 }
 
-function normalizeContent(
-  slug: SupportedSlug,
-  raw: unknown
-): AboutPageContent | MissionPageContent {
+function normalizeContent(slug: SupportedSlug, raw: unknown): PageContent {
   if (slug === 'about') {
     const parsed = AboutContentSchema.safeParse(raw);
     if (parsed.success) return parsed.data;
     return structuredClone(DEFAULT_ABOUT_CONTENT);
   }
-  const parsed = MissionContentSchema.safeParse(raw);
+  if (slug === 'mission') {
+    const parsed = MissionContentSchema.safeParse(raw);
+    if (parsed.success) return parsed.data;
+    return structuredClone(DEFAULT_MISSION_CONTENT);
+  }
+  const parsed = EquipmentContentSchema.safeParse(raw);
   if (parsed.success) return parsed.data;
-  return structuredClone(DEFAULT_MISSION_CONTENT);
+  return structuredClone(DEFAULT_EQUIPMENT_CONTENT);
 }
 
 function parseContent(
   slug: SupportedSlug,
   raw: unknown
-): { ok: true; data: AboutPageContent | MissionPageContent } | { ok: false; error: z.ZodError } {
+): { ok: true; data: PageContent } | { ok: false; error: z.ZodError } {
   if (slug === 'about') {
     const parsed = AboutContentSchema.safeParse(raw);
     return parsed.success ? { ok: true, data: parsed.data } : { ok: false, error: parsed.error };
   }
-  const parsed = MissionContentSchema.safeParse(raw);
+  if (slug === 'mission') {
+    const parsed = MissionContentSchema.safeParse(raw);
+    return parsed.success ? { ok: true, data: parsed.data } : { ok: false, error: parsed.error };
+  }
+  const parsed = EquipmentContentSchema.safeParse(raw);
   return parsed.success ? { ok: true, data: parsed.data } : { ok: false, error: parsed.error };
 }
 

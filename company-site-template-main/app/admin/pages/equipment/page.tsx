@@ -1,7 +1,7 @@
 'use client';
 
-import ModulePlaceholder from '@/components/admin/ModulePlaceholder';
+import EquipmentPageEditor from '@/components/admin/EquipmentPageEditor';
 
 export default function Page() {
-  return <ModulePlaceholder title="装备清单（页头）" />;
+  return <EquipmentPageEditor />;
 }

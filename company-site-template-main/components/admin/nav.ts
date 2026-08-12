@@ -11,7 +11,7 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: '/admin/pages/about', label: '关于我们', ready: true },
   { href: '/admin/pages/mission', label: '实力见证', ready: true },
   { href: '/admin/news', label: '新闻', ready: true },
-  { href: '/admin/pages/equipment', label: '装备清单', ready: false },
+  { href: '/admin/pages/equipment', label: '装备清单', ready: true },
   { href: '/admin/careers', label: '招贤纳士', ready: true },
   { href: '/admin/settings', label: '站点设置', ready: false },
   { href: '/admin/media', label: '媒体库', ready: false },
