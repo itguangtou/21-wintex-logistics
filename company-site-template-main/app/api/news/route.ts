@@ -4,6 +4,7 @@ import { getSupabaseAdmin, hasSupabaseConfig } from '@/lib/supabase';
 import { requireAdminSession } from '@/lib/auth';
 import { defaultNewsArticles, mapNewsRow } from '@/lib/newsContent';
 import { placeNewNewsAt } from '@/lib/newsSort';
+import { promoteNewsDraftCover } from '@/lib/mediaUpload';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -96,6 +97,13 @@ export async function POST(req: NextRequest) {
     const supabase = getSupabaseAdmin();
     const id = parsed.data.id?.trim() || `n-${Date.now()}`;
 
+    let image_url = parsed.data.image_url || '';
+    try {
+      image_url = await promoteNewsDraftCover(image_url, id);
+    } catch (e) {
+      console.error('[news POST] promote cover failed', e);
+    }
+
     // 先插入末尾占位，再按目标位重排为连续 1..n
     const insert = {
       id,
@@ -103,7 +111,7 @@ export async function POST(req: NextRequest) {
       title_en: parsed.data.title_en,
       content_zh: parsed.data.content_zh,
       content_en: parsed.data.content_en,
-      image_url: parsed.data.image_url,
+      image_url,
       published_at: parsed.data.published_at || null,
       sort_order: 999999,
       is_published: true,

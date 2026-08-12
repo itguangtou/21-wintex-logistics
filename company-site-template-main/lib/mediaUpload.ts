@@ -80,6 +80,82 @@ export async function removePreviousStorageObject(previousUrl: string, keepPath:
   await supabase.storage.from(MEDIA_BUCKET).remove([oldPath]);
 }
 
+/** 按公开 URL 删除 media 桶对象（非本桶 URL 则忽略） */
+export async function removeMediaByPublicUrl(url: string | null | undefined) {
+  const path = storagePathFromPublicUrl(url || '');
+  if (!path) return;
+  const supabase = getSupabaseAdmin();
+  await supabase.storage.from(MEDIA_BUCKET).remove([path]);
+}
+
+const COVER_EXTS = ['.jpg', '.jpeg', '.png', '.webp', '.gif'] as const;
+
+/** 删除某新闻封面槽位下所有扩展名变体 */
+export async function removeNewsCoverSlot(newsId: string) {
+  const id = String(newsId || '').trim();
+  if (!id) return;
+  const supabase = getSupabaseAdmin();
+  const paths = COVER_EXTS.map((ext) => `news/${id}/cover${ext}`);
+  await supabase.storage.from(MEDIA_BUCKET).remove(paths);
+}
+
+/** 删新闻时：删 URL 指向文件 + 该 id 封面槽 + 若仍是草稿槽一并清 */
+export async function removeNewsMediaAssets(newsId: string, imageUrl?: string | null) {
+  await removeMediaByPublicUrl(imageUrl);
+  await removeNewsCoverSlot(newsId);
+
+  const draftPath = storagePathFromPublicUrl(imageUrl || '');
+  if (draftPath?.startsWith('news/local-draft/')) {
+    const supabase = getSupabaseAdmin();
+    await supabase.storage.from(MEDIA_BUCKET).remove(COVER_EXTS.map((ext) => `news/local-draft/cover${ext}`));
+  }
+}
+
+/**
+ * 新建发布时：若封面在 local-draft，迁到 news/{id}/cover，并返回新公开 URL。
+ * 静态路径（/images/...）原样返回。
+ */
+export async function promoteNewsDraftCover(
+  imageUrl: string | null | undefined,
+  newsId: string
+): Promise<string> {
+  const url = (imageUrl || '').trim();
+  if (!url) return '';
+  const oldPath = storagePathFromPublicUrl(url);
+  if (!oldPath) return url;
+
+  const id = String(newsId || '').trim();
+  if (!id) return url;
+  if (oldPath.startsWith(`news/${id}/`)) return url;
+
+  const extMatch = oldPath.match(/\.[a-z0-9]+$/i);
+  const ext = extMatch ? extMatch[0].toLowerCase() : '.webp';
+  const newPath = `news/${id}/cover${ext}`;
+  if (oldPath === newPath) return url;
+
+  const supabase = getSupabaseAdmin();
+  const { error: moveErr } = await supabase.storage.from(MEDIA_BUCKET).move(oldPath, newPath);
+  if (moveErr) {
+    const { data: blob, error: dlErr } = await supabase.storage.from(MEDIA_BUCKET).download(oldPath);
+    if (dlErr || !blob) return url;
+    const { error: upErr } = await supabase.storage.from(MEDIA_BUCKET).upload(newPath, blob, {
+      upsert: true,
+      contentType: blob.type || undefined,
+    });
+    if (upErr) return url;
+    await supabase.storage.from(MEDIA_BUCKET).remove([oldPath]);
+  }
+
+  await removeOtherSlotFiles(`news/${id}/cover`, newPath);
+  if (oldPath.startsWith('news/local-draft/')) {
+    await supabase.storage
+      .from(MEDIA_BUCKET)
+      .remove(COVER_EXTS.map((e) => `news/local-draft/cover${e}`).filter((p) => p !== newPath));
+  }
+
+  return publicUrlForPath(newPath);
+}
+
 export function publicUrlForPath(path: string) {
   const supabase = getSupabaseAdmin();
   const { data: pub } = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(path);

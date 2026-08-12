@@ -4,6 +4,7 @@ import { getSupabaseAdmin, hasSupabaseConfig } from '@/lib/supabase';
 import { requireAdminSession } from '@/lib/auth';
 import { defaultNewsArticles, mapNewsRow } from '@/lib/newsContent';
 import { normalizeNewsSortOrder, placeNewNewsAt, placeNewsAt } from '@/lib/newsSort';
+import { promoteNewsDraftCover, removeNewsMediaAssets } from '@/lib/mediaUpload';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -141,8 +142,21 @@ export async function DELETE(_req: NextRequest, ctx: RouteCtx) {
     }
 
     const supabase = getSupabaseAdmin();
+    const { data: row } = await supabase
+      .from('news')
+      .select('id, image_url')
+      .eq('id', id)
+      .maybeSingle();
+
     const { error } = await supabase.from('news').delete().eq('id', id);
     if (error) return noStoreJson({ error: error.message }, { status: 500 });
+
+    // 库删成功后再清云文件，避免删失败却已丢图
+    try {
+      await removeNewsMediaAssets(id, row?.image_url ? String(row.image_url) : null);
+    } catch (e) {
+      console.error('[news DELETE] storage cleanup failed', e);
+    }
 
     await normalizeNewsSortOrder(supabase);
     return noStoreJson({ ok: true, id });

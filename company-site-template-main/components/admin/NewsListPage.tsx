@@ -69,6 +69,14 @@ export default function NewsListPage() {
       /* ignore */
     }
     setHasLocalDraft(false);
+    void fetch('/api/upload/cleanup-slot', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ slot: 'news/local-draft/cover' }),
+    }).catch(() => {
+      /* ignore storage cleanup errors */
+    });
   };
 
   const filtered = useMemo(() => {
