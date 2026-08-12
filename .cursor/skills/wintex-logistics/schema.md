@@ -24,6 +24,8 @@
 
 ### `news`
 - `id`, `title_zh/en`, `content_zh/en`, `image_url`, `published_at`, `sort_order`, `is_published`
+- API：`/api/news`、`/api/news/[id]`；前台 SSR：`loadPublishedNews` / `loadNewsById`
+- Seed：`npm run db:seed:news`
 
 ### `equipment` / `timeline_items` / `site_settings`
 - 见 `001_init_schema.sql`；列表型 CMS 后续用
