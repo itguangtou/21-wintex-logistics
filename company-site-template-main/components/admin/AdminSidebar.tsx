@@ -123,7 +123,7 @@ export default function AdminSidebar() {
         <img src="/images/wintex-logo.png" alt="Wintex" className="h-7 brightness-0 invert" />
         <div className="leading-tight min-w-0">
           <div className="text-sm font-semibold tracking-wide truncate">Wintex 管理端</div>
-          <div className="text-[10px] text-white/45 tracking-wider uppercase">Content CMS</div>
+          <div className="text-[10px] text-white/45 tracking-wider">内容管理</div>
         </div>
       </div>
 

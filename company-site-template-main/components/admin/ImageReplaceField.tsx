@@ -16,7 +16,7 @@ type ImageReplaceFieldProps = {
 function getBrowserSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  if (!url || !key) throw new Error('缺少 Supabase 公开配置');
+  if (!url || !key) throw new Error('图片上传暂不可用，请联系管理员');
   return createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
@@ -51,8 +51,8 @@ export default function ImageReplaceField({
         await logout();
         throw new Error(prep?.error || '登录已过期，请重新登录');
       }
-      if (!prepRes.ok) throw new Error(prep?.error || `准备上传失败（HTTP ${prepRes.status}）`);
-      if (!prep?.path || !prep?.token) throw new Error('未返回上传凭证');
+      if (!prepRes.ok) throw new Error(prep?.error || '上传准备失败，请稍后重试');
+      if (!prep?.path || !prep?.token) throw new Error('上传准备失败，请稍后重试');
 
       const supabase = getBrowserSupabase();
       const { error: upErr } = await supabase.storage
@@ -61,7 +61,7 @@ export default function ImageReplaceField({
           contentType: compressed.type,
           upsert: true,
         });
-      if (upErr) throw new Error(upErr.message || '直传失败');
+      if (upErr) throw new Error('上传失败，请稍后重试');
 
       const finRes = await fetch('/api/upload/finalize', {
         method: 'POST',
@@ -78,11 +78,11 @@ export default function ImageReplaceField({
         await logout();
         throw new Error(fin?.error || '登录已过期，请重新登录');
       }
-      if (!finRes.ok) throw new Error(fin?.error || `完成上传失败（HTTP ${finRes.status}）`);
-      if (!fin?.url) throw new Error('未返回图片地址');
+      if (!finRes.ok) throw new Error(fin?.error || '上传失败，请稍后重试');
+      if (!fin?.url) throw new Error('上传失败，请稍后重试');
       onChange(String(fin.url));
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '上传失败');
+      setError(e instanceof Error ? e.message : '上传失败，请稍后重试');
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = '';
@@ -109,7 +109,7 @@ export default function ImageReplaceField({
               onClick={() => inputRef.current?.click()}
               className="px-3 py-2 rounded-lg bg-[#0E2745] text-white text-sm hover:bg-[#163a5f] disabled:opacity-50"
             >
-              {uploading ? '压缩并上传中…' : value ? '选择图片替换' : '选择图片上传'}
+              {uploading ? '上传中…' : value ? '选择图片替换' : '选择图片上传'}
             </button>
             <input
               ref={inputRef}
@@ -120,7 +120,7 @@ export default function ImageReplaceField({
             />
           </div>
           <p className="text-xs text-gray-500">
-            本地压成 WebP 后直传云存储（上限约 15MB，不受 Vercel 4.5MB 限制）；同槽覆盖，不堆积。
+            支持 JPG / PNG 等常见格式，单张建议不超过 15MB；重新上传会替换当前图片。
           </p>
           {error && <span className="text-sm text-red-600">{error}</span>}
         </div>

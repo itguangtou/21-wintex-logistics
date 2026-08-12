@@ -95,7 +95,7 @@ export default function HomePageEditor() {
         const newsJ = await newsRes.json().catch(() => ({}));
         const equipJ = await equipRes.json().catch(() => ({}));
         if (!mounted) return;
-        if (!homeRes.ok) throw new Error(homeJ?.error || `首页 HTTP ${homeRes.status}`);
+        if (!homeRes.ok) throw new Error(homeJ?.error || '首页加载失败，请刷新页面');
 
         setData(homeJ.content ? structuredClone(homeJ.content) : cloneDefault());
 
@@ -173,8 +173,8 @@ export default function HomePageEditor() {
         await logout();
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
-      if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
-      setMessage(mode === 'draft' ? '草稿已保存（仅后台可见）' : '已发布，前台首页对应区块已更新');
+      if (!res.ok) throw new Error(j?.error || '保存失败，请稍后重试');
+      setMessage(mode === 'draft' ? '草稿已保存' : '已发布，网站已更新');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '保存失败');
     } finally {

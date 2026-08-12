@@ -102,7 +102,7 @@ export default function NewsEditor() {
   draftRef.current = draft;
 
   useEffect(() => {
-    setSubtitle(isNew ? '新建新闻（未发布前仅保存在本机）' : `编辑新闻 · ${id}`);
+    setSubtitle(isNew ? '新建新闻（未发布前仅保存在本地草稿）' : `编辑新闻 · ${id}`);
     let mounted = true;
     (async () => {
       setLoading(true);
@@ -145,7 +145,7 @@ export default function NewsEditor() {
             await logout();
             throw new Error(detail?.error || '登录已过期');
           }
-          if (!detailRes.ok) throw new Error(detail?.error || `HTTP ${detailRes.status}`);
+          if (!detailRes.ok) throw new Error(detail?.error || '加载失败，请刷新页面');
           if (detail?.item) {
             const next = fromArticle(detail.item);
             const max = Math.max(1, next.sort_order, 20);
@@ -176,7 +176,7 @@ export default function NewsEditor() {
   const goBack = useCallback(() => {
     if (isNew) {
       writeLocalDraft(draftRef.current);
-      setMessage('已保存到本机草稿（未发布到网站）');
+      setMessage('已保存到本地草稿（尚未发布到网站）');
     }
     router.push('/admin/news');
   }, [isNew, router]);
@@ -206,9 +206,9 @@ export default function NewsEditor() {
           await logout();
           throw new Error(j?.error || '登录已过期，请重新登录');
         }
-        if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
+        if (!res.ok) throw new Error(j?.error || '保存失败，请稍后重试');
         const newId = j?.item?.id;
-        if (!newId) throw new Error('未返回 id');
+        if (!newId) throw new Error('发布失败，请稍后重试');
         clearLocalDraft();
         setMessage('已发布到网站');
         router.replace(`/admin/news/${newId}`);
@@ -226,13 +226,13 @@ export default function NewsEditor() {
         await logout();
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
-      if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
+      if (!res.ok) throw new Error(j?.error || '保存失败，请稍后重试');
       if (j?.item) {
         const next = fromArticle(j.item);
         next.sort_order = clampSort(next.sort_order, sortMax);
         setDraft(next);
       }
-      setMessage('已发布（前台刷新可见）');
+      setMessage('已发布，网站已更新');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '发布失败');
     } finally {
@@ -265,7 +265,7 @@ export default function NewsEditor() {
           {publishing ? '发布中…' : '发布'}
         </button>
         {isNew && (
-          <span className="text-xs text-gray-500">未点发布前只保存在本机，不会出现在列表/前台</span>
+          <span className="text-xs text-gray-500">未点发布前只保存在本地草稿，不会出现在列表和网站上</span>
         )}
         {message && <span className="text-sm text-emerald-700">{message}</span>}
         {error && <span className="text-sm text-red-600">{error}</span>}
@@ -324,7 +324,7 @@ export default function NewsEditor() {
         />
 
         <BilingualField
-          label="正文（支持简单 HTML：strong / ul / li）"
+          label="正文（可用加粗、列表等简单格式）"
           zh={draft.content_zh}
           en={draft.content_en}
           multiline

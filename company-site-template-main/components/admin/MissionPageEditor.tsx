@@ -106,7 +106,7 @@ export default function MissionPageEditor() {
   const loadTimeline = useCallback(async () => {
     const res = await fetch('/api/timeline', { credentials: 'include', cache: 'no-store' });
     const j = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(j?.error || `时间轴 HTTP ${res.status}`);
+    if (!res.ok) throw new Error(j?.error || '时间轴加载失败，请刷新页面');
     const items = (Array.isArray(j.items) ? j.items : []) as TimelineItemRow[];
     setTimeline(items);
     const drafts: Record<number, TimelineDraft> = {};
@@ -115,7 +115,7 @@ export default function MissionPageEditor() {
   }, []);
 
   useEffect(() => {
-    setSubtitle('按前台顺序编辑：页头 → 时间轴 → 聚焦 → 项目卡片');
+    setSubtitle('按页面顺序编辑：页头 → 时间轴 → 聚焦 → 项目卡片');
     let mounted = true;
     (async () => {
       setLoading(true);
@@ -129,7 +129,7 @@ export default function MissionPageEditor() {
         ]);
         const j = await pageRes.json().catch(() => ({}));
         if (!mounted) return;
-        if (!pageRes.ok) throw new Error(j?.error || `HTTP ${pageRes.status}`);
+        if (!pageRes.ok) throw new Error(j?.error || '加载失败，请刷新页面');
         setData(j.content ? structuredClone(j.content) : cloneDefault());
       } catch (e: unknown) {
         if (!mounted) return;
@@ -162,8 +162,8 @@ export default function MissionPageEditor() {
         await logout();
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
-      if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
-      setMessage(mode === 'draft' ? '页头/聚焦/卡片草稿已保存' : '页头/聚焦/卡片已发布');
+      if (!res.ok) throw new Error(j?.error || '保存失败，请稍后重试');
+      setMessage(mode === 'draft' ? '草稿已保存' : '已发布，网站已更新');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '保存失败');
     } finally {
@@ -236,8 +236,8 @@ export default function MissionPageEditor() {
         await logout();
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
-      if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
-      setMessage('时间轴条目已保存（前台立即生效）');
+      if (!res.ok) throw new Error(j?.error || '保存失败，请稍后重试');
+      setMessage('时间轴条目已保存');
       await loadTimeline();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '时间轴保存失败');
@@ -270,7 +270,7 @@ export default function MissionPageEditor() {
         await logout();
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
-      if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
+      if (!res.ok) throw new Error(j?.error || '保存失败，请稍后重试');
       const newId = Number(j?.item?.id);
       setMessage('已新增时间轴条目');
       await loadTimeline();
@@ -310,8 +310,8 @@ export default function MissionPageEditor() {
         await logout();
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
-      if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
-      setMessage('顺序已更新（前台刷新即见）');
+      if (!res.ok) throw new Error(j?.error || '保存失败，请稍后重试');
+      setMessage('顺序已更新');
       await loadTimeline();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '调整顺序失败');
@@ -322,7 +322,7 @@ export default function MissionPageEditor() {
 
   const deleteTimelineItem = async (row: TimelineItemRow) => {
     if (row.id <= 0) {
-      setError('默认占位数据不可删除');
+      setError('示例数据不可删除');
       return;
     }
     if (!window.confirm(`确定删除「${row.year} · ${row.project_name_zh || row.project_name_en}」？`)) {
@@ -341,7 +341,7 @@ export default function MissionPageEditor() {
         await logout();
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
-      if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
+      if (!res.ok) throw new Error(j?.error || '保存失败，请稍后重试');
       setMessage('已删除时间轴条目');
       await loadTimeline();
     } catch (e: unknown) {
@@ -477,7 +477,7 @@ export default function MissionPageEditor() {
                       onChange={(e) => patchTimelineDraft(row.id, { year: e.target.value })}
                     />
                   </label>
-                  <p className="text-xs text-gray-500">列表顺序即前台展示顺序，请用右侧「上移 / 下移」调整</p>
+                  <p className="text-xs text-gray-500">列表顺序即网站展示顺序，请用右侧「上移 / 下移」调整</p>
                   <BilingualField
                     label="项目名称"
                     zh={draft.project_name_zh}

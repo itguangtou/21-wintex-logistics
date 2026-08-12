@@ -160,7 +160,7 @@ export default function CareersEditor() {
           /* ignore */
         }
         const res = await fetch('/api/careers', { cache: 'no-store', credentials: 'include' });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) throw new Error('加载失败，请刷新页面');
         const json = (await res.json()) as CareersData;
         if (!mounted) return;
         setData(json);
@@ -212,7 +212,7 @@ export default function CareersEditor() {
       delete next[id];
       return next;
     });
-    setMessage('已从编辑列表移除该岗位（需发布后前台生效）');
+    setMessage('已从编辑列表移除该岗位（需发布后才会在网站生效）');
   };
 
   const addNewJob = () => {
@@ -285,7 +285,7 @@ export default function CareersEditor() {
           await logout();
           throw new Error(j?.error || '登录已过期，请重新登录');
         }
-        throw new Error(j?.error || `HTTP ${res.status}`);
+        throw new Error(j?.error || '保存失败，请稍后重试');
       }
 
       try {
@@ -296,7 +296,7 @@ export default function CareersEditor() {
         /* ignore */
       }
 
-      setMessage('已发布，前台招聘页已更新（刷新 careers.html 可见）');
+      setMessage('已发布，招聘页已更新');
       setData(dataToPublish);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '发布失败');

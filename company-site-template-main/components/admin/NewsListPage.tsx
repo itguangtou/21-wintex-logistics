@@ -36,7 +36,7 @@ export default function NewsListPage() {
         await logout();
         throw new Error(j?.error || '登录已过期');
       }
-      if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
+      if (!res.ok) throw new Error(j?.error || '操作失败，请稍后重试');
       setRows(Array.isArray(j.items) ? j.items : []);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '加载失败');
@@ -57,7 +57,7 @@ export default function NewsListPage() {
   }, []);
 
   useEffect(() => {
-    setSubtitle('新闻列表：新建先存本机，点发布才入库；删除即从前台消失');
+    setSubtitle('新闻列表：新建可先暂存，点发布后才会在网站显示；删除后网站将不再展示');
     void load();
     return () => setSubtitle(null);
   }, [setSubtitle, load]);
@@ -95,7 +95,7 @@ export default function NewsListPage() {
   };
 
   const handleDelete = async (row: NewsArticle) => {
-    if (!window.confirm(`确定删除「${row.title_zh || row.title_en || row.id}」？删除后前台立即不可见。`)) return;
+    if (!window.confirm(`确定删除「${row.title_zh || row.title_en || row.id}」？删除后网站将不再展示。`)) return;
     setBusy(true);
     setError(null);
     try {
@@ -108,7 +108,7 @@ export default function NewsListPage() {
         await logout();
         throw new Error(j?.error || '登录已过期');
       }
-      if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
+      if (!res.ok) throw new Error(j?.error || '操作失败，请稍后重试');
       await load();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '删除失败');
@@ -134,7 +134,7 @@ export default function NewsListPage() {
         await logout();
         throw new Error(j?.error || '登录已过期');
       }
-      if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
+      if (!res.ok) throw new Error(j?.error || '操作失败，请稍后重试');
       await load();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '调整顺序失败');
@@ -234,7 +234,7 @@ export default function NewsListPage() {
       />
       {hasLocalDraft && (
         <div className="mb-3 flex flex-wrap items-center gap-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-100 text-sm text-amber-900">
-          <span>本机有未发布的新建草稿</span>
+          <span>有未发布的新建草稿</span>
           <button
             type="button"
             className="text-[#0E2745] hover:underline font-medium"

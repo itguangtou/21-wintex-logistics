@@ -72,7 +72,7 @@ export default function AboutPageEditor() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setSubtitle('编辑品牌引言与网络图文案，发布后前台立即更新');
+    setSubtitle('编辑品牌引言与网络图文案，发布后网站会更新');
     let mounted = true;
     (async () => {
       setLoading(true);
@@ -81,7 +81,7 @@ export default function AboutPageEditor() {
         const res = await fetch('/api/pages/about', { credentials: 'include', cache: 'no-store' });
         const j = await res.json().catch(() => ({}));
         if (!mounted) return;
-        if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
+        if (!res.ok) throw new Error(j?.error || '加载失败，请刷新页面');
         setData(j.content ? structuredClone(j.content) : cloneDefault());
       } catch (e: unknown) {
         if (!mounted) return;
@@ -114,8 +114,8 @@ export default function AboutPageEditor() {
         await logout();
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
-      if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
-      setMessage(mode === 'draft' ? '草稿已保存（仅后台可见）' : '已发布，前台关于我们页已更新');
+      if (!res.ok) throw new Error(j?.error || '保存失败，请稍后重试');
+      setMessage(mode === 'draft' ? '草稿已保存' : '已发布，网站已更新');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '保存失败');
     } finally {

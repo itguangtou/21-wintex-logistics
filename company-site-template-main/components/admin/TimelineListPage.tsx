@@ -52,7 +52,7 @@ export default function TimelineListPage() {
     try {
       const res = await fetch('/api/timeline', { credentials: 'include', cache: 'no-store' });
       const j = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
+      if (!res.ok) throw new Error(j?.error || '操作失败，请稍后重试');
       setItems(Array.isArray(j.items) ? j.items : []);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '加载失败');
@@ -63,7 +63,7 @@ export default function TimelineListPage() {
   }, []);
 
   useEffect(() => {
-    setSubtitle('增删改时间轴条目；同年多条在前台合并展示');
+    setSubtitle('增删改时间轴条目；同年多条在网站上合并展示');
     void load();
     return () => setSubtitle(null);
   }, [setSubtitle, load]);
@@ -128,7 +128,7 @@ export default function TimelineListPage() {
         await logout();
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
-      if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
+      if (!res.ok) throw new Error(j?.error || '操作失败，请稍后重试');
       setMessage(isNew ? '已新建' : '已保存');
       closeEditor();
       await load();
@@ -141,7 +141,7 @@ export default function TimelineListPage() {
 
   const remove = async (row: TimelineItemRow) => {
     if (row.id <= 0) {
-      setError('默认占位数据不可删除，请先执行种子写入数据库');
+      setError('示例数据不可删除，请先保存为正式条目后再操作');
       return;
     }
     if (!window.confirm(`确定删除「${row.year} · ${row.project_name_zh || row.project_name_en}」？`)) {
@@ -160,7 +160,7 @@ export default function TimelineListPage() {
         await logout();
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
-      if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
+      if (!res.ok) throw new Error(j?.error || '操作失败，请稍后重试');
       setMessage('已删除');
       if (editingId === row.id) closeEditor();
       await load();
