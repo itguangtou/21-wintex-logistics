@@ -30,9 +30,14 @@ function Navigation() {
       <Link href={`/${locale}/equipment`} className="hover:text-gray-600">
         {n('equipment')}
       </Link>
-      <Link href={`/${locale}/careers`} className="hover:text-gray-600">
+      <a
+        href={`/careers.html?lang=${locale}`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="hover:text-gray-600"
+      >
         {n('careers')}
-      </Link>
+      </a>
       <Link href={`/${locale}#contact`} className="hover:text-gray-600">
         {n('contact')}
       </Link>

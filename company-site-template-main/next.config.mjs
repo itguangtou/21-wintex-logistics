@@ -4,21 +4,14 @@ const withNextIntl = createNextIntlPlugin('./i18n.ts');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  async redirects() {
+  async rewrites() {
     return [
       {
         source: '/careers.html',
-        has: [{ type: 'query', key: 'lang', value: 'en' }],
-        destination: '/en/careers',
-        permanent: false,
-      },
-      {
-        source: '/careers.html',
-        destination: '/zh/careers',
-        permanent: false,
-      },
+        destination: '/api/careers-page'
+      }
     ];
-  },
+  }
 };
 
 export default withNextIntl(nextConfig);

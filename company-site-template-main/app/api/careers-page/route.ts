@@ -1,17 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
 
-/** 旧 careers.html 入口：永久跳到 SSR 招聘页，禁止缓存 */
-export async function GET(request: NextRequest) {
-  const lang = request.nextUrl.searchParams.get('lang');
-  const locale = lang === 'en' ? 'en' : 'zh';
-  const url = request.nextUrl.clone();
-  url.pathname = `/${locale}/careers`;
-  url.search = '';
-  return NextResponse.redirect(url, {
-    status: 307,
-    headers: {
-      'Cache-Control': 'no-store, no-cache, must-revalidate',
-      Pragma: 'no-cache',
-    },
-  });
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+export async function GET(_request: NextRequest) {
+  try {
+    const careersHtmlPath = path.join(process.cwd(), 'public', 'careers.html');
+    const htmlContent = fs.readFileSync(careersHtmlPath, 'utf8');
+
+    return new NextResponse(htmlContent, {
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        Pragma: 'no-cache',
+        Expires: '0',
+      },
+    });
+  } catch (error) {
+    console.error('Error serving careers.html:', error);
+    return new NextResponse('Careers page not found', {
+      status: 404,
+      headers: {
+        'Cache-Control': 'no-store',
+      },
+    });
+  }
 }

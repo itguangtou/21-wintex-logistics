@@ -143,7 +143,7 @@ export default function CareersEditor() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setSubtitle('编辑岗位与联系方式，发布后刷新 /zh/careers 即可看到');
+    setSubtitle('编辑岗位与联系方式，发布后刷新招聘页即可看到');
     return () => setSubtitle(null);
   }, [setSubtitle]);
 
@@ -296,7 +296,7 @@ export default function CareersEditor() {
         /* ignore */
       }
 
-      setMessage('已发布，前台招聘页已更新（刷新 /zh/careers 或 /en/careers 可见）');
+      setMessage('已发布，前台招聘页已更新（刷新 careers.html 可见）');
       setData(dataToPublish);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '发布失败');

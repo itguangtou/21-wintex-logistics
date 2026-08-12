@@ -14,7 +14,7 @@ export default function MobileNavigation() {
       <Link href={`/${locale}/mission`} className="hover:text-gray-600 whitespace-nowrap">{n('mission')}</Link>
       <Link href={`/${locale}/news`} className="hover:text-gray-600 whitespace-nowrap">{n('news')}</Link>
       <Link href={`/${locale}/equipment`} className="hover:text-gray-600 whitespace-nowrap">{n('equipment')}</Link>
-      <Link href={`/${locale}/careers`} className="hover:text-gray-600 whitespace-nowrap">{n('careers')}</Link>
+      <a href={`/careers.html?lang=${locale}`} target="_blank" rel="noopener noreferrer" className="hover:text-gray-600 whitespace-nowrap">{n('careers')}</a>
       <Link href={`/${locale}#contact`} className="hover:text-gray-600 whitespace-nowrap">{n('contact')}</Link>
       <div className="ml-1">
         <LocaleSwitcher />
