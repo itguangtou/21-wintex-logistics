@@ -143,7 +143,7 @@ export default function CareersEditor() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    setSubtitle('编辑岗位与联系方式，发布后前台立即更新');
+    setSubtitle('编辑岗位与联系方式，发布后刷新 /zh/careers 即可看到');
     return () => setSubtitle(null);
   }, [setSubtitle]);
 
@@ -152,23 +152,21 @@ export default function CareersEditor() {
     (async () => {
       setError(null);
       try {
+        // 始终以服务端数据为准，不用 localStorage 草稿覆盖（避免已删除岗位被草稿复活）
+        try {
+          localStorage.removeItem('careersDraft');
+          localStorage.removeItem('careersData');
+        } catch {
+          /* ignore */
+        }
         const res = await fetch('/api/careers', { cache: 'no-store', credentials: 'include' });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = (await res.json()) as CareersData;
-
-        const draft = typeof window !== 'undefined' ? localStorage.getItem('careersDraft') : null;
         if (!mounted) return;
-        setData(draft ? JSON.parse(draft) : json);
+        setData(json);
       } catch {
-        const draft = typeof window !== 'undefined' ? localStorage.getItem('careersDraft') : null;
-        if (draft) {
-          if (!mounted) return;
-          setData(JSON.parse(draft));
-          setError('API 加载失败，已使用本地草稿');
-        } else {
-          if (!mounted) return;
-          setError('无法加载数据（API 不可用且本地草稿为空）');
-        }
+        if (!mounted) return;
+        setError('无法加载招聘数据，请刷新重试');
       }
     })();
     return () => {
@@ -235,13 +233,6 @@ export default function CareersEditor() {
     setOpenJobs((prev) => ({ ...prev, [newId]: true }));
   };
 
-  const saveDraft = () => {
-    if (!data) return;
-    localStorage.setItem('careersDraft', JSON.stringify(data));
-    setMessage('已保存到浏览器本地草稿');
-    setError(null);
-  };
-
   const publish = async () => {
     if (!data) return;
     setSaving(true);
@@ -298,15 +289,14 @@ export default function CareersEditor() {
       }
 
       try {
-        const ch = new BroadcastChannel('careers');
-        ch.postMessage({ type: 'updated', at: Date.now() });
-        ch.close();
+        localStorage.removeItem('careersDraft');
+        localStorage.removeItem('careersData');
+        localStorage.removeItem('careers-updated');
       } catch {
         /* ignore */
       }
 
-      localStorage.setItem('careers-updated', String(Date.now()));
-      setMessage('已发布，前台招聘页已更新');
+      setMessage('已发布，前台招聘页已更新（刷新 /zh/careers 或 /en/careers 可见）');
       setData(dataToPublish);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '发布失败');
@@ -326,13 +316,6 @@ export default function CareersEditor() {
   return (
     <div className="p-6 lg:p-8 max-w-5xl space-y-6">
       <div className="flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          onClick={saveDraft}
-          className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm hover:bg-gray-50"
-        >
-          保存草稿（本地）
-        </button>
         <button
           type="button"
           onClick={() => void publish()}
