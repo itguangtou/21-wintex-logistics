@@ -28,6 +28,7 @@ export function resolveAdminTitle(pathname: string): string {
   const exact = ADMIN_NAV.find((item) => item.href === pathname);
   if (exact) return exact.label;
 
+  if (pathname.startsWith('/admin/news/new')) return '新建新闻';
   if (pathname.startsWith('/admin/news')) return '新闻';
   if (pathname.startsWith('/admin/careers')) return '招贤纳士';
   if (pathname.startsWith('/admin/pages/home')) return '首页';

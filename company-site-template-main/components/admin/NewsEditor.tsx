@@ -1,12 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import BilingualField from './BilingualField';
 import ImageReplaceField from './ImageReplaceField';
 import { useAdminChrome } from './AdminChromeContext';
 import { useAdminAuth } from './AdminAuthContext';
 import type { NewsArticle } from '@/lib/newsContent';
+
+const LOCAL_DRAFT_KEY = 'newsLocalDraft';
 
 type Draft = {
   title_zh: string;
@@ -18,15 +20,21 @@ type Draft = {
   sort_order: number;
 };
 
-function emptyDraft(): Draft {
+function todayYmd() {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+function emptyNewDraft(sortMax: number): Draft {
   return {
     title_zh: '',
     title_en: '',
     content_zh: '',
     content_en: '',
     image_url: '',
-    published_at: '',
-    sort_order: 0,
+    published_at: todayYmd(),
+    sort_order: Math.max(1, sortMax),
   };
 }
 
@@ -48,41 +56,92 @@ function clampSort(value: number, max: number): number {
   return Math.min(n, Math.max(1, Math.trunc(value)));
 }
 
+function readLocalDraft(): Draft | null {
+  try {
+    const raw = localStorage.getItem(LOCAL_DRAFT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Draft;
+    if (!parsed || typeof parsed !== 'object') return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalDraft(draft: Draft) {
+  try {
+    localStorage.setItem(LOCAL_DRAFT_KEY, JSON.stringify(draft));
+  } catch {
+    /* ignore quota */
+  }
+}
+
+function clearLocalDraft() {
+  try {
+    localStorage.removeItem(LOCAL_DRAFT_KEY);
+  } catch {
+    /* ignore */
+  }
+}
+
 export default function NewsEditor() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { setSubtitle } = useAdminChrome();
   const { logout } = useAdminAuth();
   const id = params?.id || '';
+  const isNew = id === 'new';
 
-  const [draft, setDraft] = useState<Draft>(emptyDraft());
-  const [totalCount, setTotalCount] = useState(1);
+  const [draft, setDraft] = useState<Draft>(emptyNewDraft(1));
+  const [sortMax, setSortMax] = useState(1);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [publishing, setPublishing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const draftRef = useRef(draft);
+  draftRef.current = draft;
 
   useEffect(() => {
-    setSubtitle(`编辑新闻 · ${id}`);
+    setSubtitle(isNew ? '新建新闻（未发布前仅保存在本机）' : `编辑新闻 · ${id}`);
     let mounted = true;
     (async () => {
       setLoading(true);
       setError(null);
       try {
-        const [detailRes, listRes] = await Promise.all([
-          fetch(`/api/news/${id}`, { credentials: 'include', cache: 'no-store' }),
-          fetch('/api/news?all=1', { credentials: 'include', cache: 'no-store' }),
-        ]);
-        const detail = await detailRes.json().catch(() => ({}));
+        const listRes = await fetch('/api/news?all=1', { credentials: 'include', cache: 'no-store' });
         const list = await listRes.json().catch(() => ({}));
         if (!mounted) return;
-        if (!detailRes.ok) throw new Error(detail?.error || `HTTP ${detailRes.status}`);
-        const count = Array.isArray(list?.items) ? list.items.length : 1;
-        setTotalCount(Math.max(1, count));
-        if (detail?.item) {
-          const next = fromArticle(detail.item);
-          next.sort_order = clampSort(next.sort_order, count);
-          setDraft(next);
+        if (listRes.status === 401) {
+          await logout();
+          throw new Error(list?.error || '登录已过期');
+        }
+        const count = Array.isArray(list?.items) ? list.items.length : 0;
+
+        if (isNew) {
+          const max = count + 1;
+          setSortMax(max);
+          const local = readLocalDraft();
+          if (local) {
+            setDraft({
+              ...emptyNewDraft(max),
+              ...local,
+              sort_order: clampSort(local.sort_order || max, max),
+              published_at: local.published_at || todayYmd(),
+            });
+          } else {
+            setDraft(emptyNewDraft(max));
+          }
+        } else {
+          setSortMax(Math.max(1, count));
+          const detailRes = await fetch(`/api/news/${id}`, { credentials: 'include', cache: 'no-store' });
+          const detail = await detailRes.json().catch(() => ({}));
+          if (!mounted) return;
+          if (!detailRes.ok) throw new Error(detail?.error || `HTTP ${detailRes.status}`);
+          if (detail?.item) {
+            const next = fromArticle(detail.item);
+            next.sort_order = clampSort(next.sort_order, Math.max(1, count));
+            setDraft(next);
+          }
         }
       } catch (e: unknown) {
         if (!mounted) return;
@@ -95,20 +154,56 @@ export default function NewsEditor() {
       mounted = false;
       setSubtitle(null);
     };
-  }, [id, setSubtitle]);
+  }, [id, isNew, setSubtitle, logout]);
 
-  const save = async () => {
-    setSaving(true);
+  // 新建：内容变更时同步到本地，返回列表也不丢
+  useEffect(() => {
+    if (!isNew || loading) return;
+    writeLocalDraft(draft);
+  }, [draft, isNew, loading]);
+
+  const goBack = useCallback(() => {
+    if (isNew) {
+      writeLocalDraft(draftRef.current);
+      setMessage('已保存到本机草稿（未发布到网站）');
+    }
+    router.push('/admin/news');
+  }, [isNew, router]);
+
+  const publish = async () => {
+    setPublishing(true);
     setMessage(null);
     setError(null);
     try {
-      const sort_order = clampSort(draft.sort_order, totalCount);
+      const sort_order = clampSort(draft.sort_order, sortMax);
       const body = {
         ...draft,
         sort_order,
         published_at: draft.published_at || null,
         is_published: true,
       };
+
+      if (isNew) {
+        const res = await fetch('/api/news', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+        const j = await res.json().catch(() => ({}));
+        if (res.status === 401) {
+          await logout();
+          throw new Error(j?.error || '登录已过期，请重新登录');
+        }
+        if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
+        const newId = j?.item?.id;
+        if (!newId) throw new Error('未返回 id');
+        clearLocalDraft();
+        setMessage('已发布到网站');
+        router.replace(`/admin/news/${newId}`);
+        return;
+      }
+
       const res = await fetch(`/api/news/${id}`, {
         method: 'PUT',
         credentials: 'include',
@@ -123,14 +218,14 @@ export default function NewsEditor() {
       if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
       if (j?.item) {
         const next = fromArticle(j.item);
-        next.sort_order = clampSort(next.sort_order, totalCount);
+        next.sort_order = clampSort(next.sort_order, sortMax);
         setDraft(next);
       }
-      setMessage('已保存（前台刷新可见）');
+      setMessage('已发布（前台刷新可见）');
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '保存失败');
+      setError(e instanceof Error ? e.message : '发布失败');
     } finally {
-      setSaving(false);
+      setPublishing(false);
     }
   };
 
@@ -138,24 +233,29 @@ export default function NewsEditor() {
     return <div className="p-8 text-sm text-gray-500">加载中…</div>;
   }
 
+  const imageSlot = isNew ? 'news/local-draft/cover' : `news/${id}/cover`;
+
   return (
     <div className="p-6 lg:p-8 max-w-6xl space-y-6">
       <div className="flex flex-wrap items-center gap-3 sticky top-0 z-10 bg-[#F5F7FA] py-3 -mt-2">
         <button
           type="button"
-          onClick={() => router.push('/admin/news')}
+          onClick={goBack}
           className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm hover:bg-gray-50"
         >
           返回列表
         </button>
         <button
           type="button"
-          disabled={saving}
-          onClick={() => void save()}
+          disabled={publishing}
+          onClick={() => void publish()}
           className="px-5 py-2 rounded-lg bg-[#0E2745] text-white text-sm font-semibold hover:bg-[#163a5f] disabled:opacity-50"
         >
-          {saving ? '保存中…' : '保存'}
+          {publishing ? '发布中…' : '发布'}
         </button>
+        {isNew && (
+          <span className="text-xs text-gray-500">未点发布前只保存在本机，不会出现在列表/前台</span>
+        )}
         {message && <span className="text-sm text-emerald-700">{message}</span>}
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>
@@ -173,12 +273,12 @@ export default function NewsEditor() {
           </label>
           <label className="grid gap-1">
             <span className="text-sm font-medium text-gray-700">
-              排序位置（仅允许 1～{totalCount}，1 最前）
+              排序位置（仅允许 1～{sortMax}，1 最前）
             </span>
             <input
               type="number"
               min={1}
-              max={totalCount}
+              max={sortMax}
               step={1}
               className="border rounded-lg px-3 py-2 text-sm outline-none focus:border-[#0E2745] focus:ring-2 focus:ring-[#0E2745]/15"
               value={draft.sort_order}
@@ -188,10 +288,10 @@ export default function NewsEditor() {
                   setDraft((d) => ({ ...d, sort_order: 1 }));
                   return;
                 }
-                setDraft((d) => ({ ...d, sort_order: clampSort(Number(raw), totalCount) }));
+                setDraft((d) => ({ ...d, sort_order: clampSort(Number(raw), sortMax) }));
               }}
               onBlur={() =>
-                setDraft((d) => ({ ...d, sort_order: clampSort(d.sort_order, totalCount) }))
+                setDraft((d) => ({ ...d, sort_order: clampSort(d.sort_order, sortMax) }))
               }
             />
           </label>
@@ -200,7 +300,7 @@ export default function NewsEditor() {
         <ImageReplaceField
           label="封面 / 详情图"
           value={draft.image_url}
-          slot={`news/${id}/cover`}
+          slot={imageSlot}
           onChange={(url) => setDraft((d) => ({ ...d, image_url: url }))}
         />
 

@@ -46,11 +46,30 @@ export default function NewsListPage() {
     }
   }, [logout]);
 
+  const [hasLocalDraft, setHasLocalDraft] = useState(false);
+
   useEffect(() => {
-    setSubtitle('新闻列表：新建 / 编辑 / 删除；删除即从前台消失');
+    try {
+      setHasLocalDraft(!!localStorage.getItem('newsLocalDraft'));
+    } catch {
+      setHasLocalDraft(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    setSubtitle('新闻列表：新建先存本机，点发布才入库；删除即从前台消失');
     void load();
     return () => setSubtitle(null);
   }, [setSubtitle, load]);
+
+  const discardLocalDraft = () => {
+    try {
+      localStorage.removeItem('newsLocalDraft');
+    } catch {
+      /* ignore */
+    }
+    setHasLocalDraft(false);
+  };
 
   const filtered = useMemo(() => {
     const q = keyword.trim().toLowerCase();
@@ -63,42 +82,8 @@ export default function NewsListPage() {
     );
   }, [rows, keyword]);
 
-  const handleCreate = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      const today = new Date();
-      const pad = (n: number) => String(n).padStart(2, '0');
-      const published_at = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
-
-      const res = await fetch('/api/news', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          title_zh: '新新闻',
-          title_en: 'New Article',
-          content_zh: '',
-          content_en: '',
-          image_url: '',
-          published_at,
-          is_published: true,
-        }),
-      });
-      const j = await res.json().catch(() => ({}));
-      if (res.status === 401) {
-        await logout();
-        throw new Error(j?.error || '登录已过期');
-      }
-      if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
-      const id = j?.item?.id;
-      if (!id) throw new Error('未返回 id');
-      router.push(`/admin/news/${id}`);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '新建失败');
-    } finally {
-      setBusy(false);
-    }
+  const handleCreate = () => {
+    router.push('/admin/news/new');
   };
 
   const handleDelete = async (row: NewsArticle) => {
@@ -235,10 +220,25 @@ export default function NewsListPage() {
       <SearchBar
         keyword={keyword}
         onKeywordChange={setKeyword}
-        onCreate={() => void handleCreate()}
-        createLabel={busy ? '创建中…' : '新建新闻'}
+        onCreate={handleCreate}
+        createLabel="新建新闻"
         showStatus={false}
       />
+      {hasLocalDraft && (
+        <div className="mb-3 flex flex-wrap items-center gap-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-100 text-sm text-amber-900">
+          <span>本机有未发布的新建草稿</span>
+          <button
+            type="button"
+            className="text-[#0E2745] hover:underline font-medium"
+            onClick={() => router.push('/admin/news/new')}
+          >
+            继续编辑
+          </button>
+          <button type="button" className="text-red-600 hover:underline" onClick={discardLocalDraft}>
+            丢弃草稿
+          </button>
+        </div>
+      )}
       {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
       {loading ? (
         <div className="text-sm text-gray-500 py-8">加载中…</div>
