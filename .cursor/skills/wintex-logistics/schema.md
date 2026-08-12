@@ -10,7 +10,7 @@
 - `is_active` BOOLEAN
 - `created_at` / `updated_at`
 
-初始账号：`wintex` / `wintex2025`（`npm run db:seed:admin`）
+初始账号：`wintex` / `wintex2026`（`npm run db:seed:admin`）
 
 ### `careers_data`
 - `id` TEXT PK（固定 `'main'`）

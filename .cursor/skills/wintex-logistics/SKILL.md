@@ -26,7 +26,7 @@ description: >-
 | Vercel 项目名 | `21-wintex-logistics` |
 | Vercel Root Directory | `company-site-template-main` |
 | Supabase URL | `https://dlhhwuuvndwqkkppohie.supabase.co` |
-| 管理登录 | 用户名 `wintex` / 密码 `wintex2025`（表 `admin_users`） |
+| 管理登录 | 用户名 `wintex` / 密码 `wintex2026`（表 `admin_users`） |
 
 ## 技术栈
 
