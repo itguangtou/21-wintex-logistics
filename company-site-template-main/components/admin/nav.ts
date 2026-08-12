@@ -7,7 +7,7 @@ export type AdminNavItem = {
 
 /** 单一内容模块，顺序对齐官网顶栏 + 联系我们 */
 export const ADMIN_NAV: AdminNavItem[] = [
-  { href: '/admin/pages/home', label: '首页', ready: false },
+  { href: '/admin/pages/home', label: '首页', ready: true },
   { href: '/admin/pages/about', label: '关于我们', ready: true },
   { href: '/admin/pages/mission', label: '实力见证', ready: true },
   { href: '/admin/news', label: '新闻', ready: true },

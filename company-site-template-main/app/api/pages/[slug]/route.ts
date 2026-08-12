@@ -12,11 +12,43 @@ import {
   DEFAULT_CONTACT_CONTENT,
   type ContactPageContent,
 } from '@/lib/contactContent';
+import {
+  DEFAULT_HOME_CONTENT,
+  type HomePageContent,
+} from '@/lib/homePageContent';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 const LocaleTextSchema = z.object({ zh: z.string(), en: z.string() });
+
+const HomeTeaserSchema = z.object({
+  title: LocaleTextSchema,
+  subtitle: LocaleTextSchema,
+  desc: LocaleTextSchema,
+  ctaLabel: LocaleTextSchema,
+  image: z.string(),
+});
+
+const HomeContentSchema = z.object({
+  about: HomeTeaserSchema,
+  strength: HomeTeaserSchema,
+  news: z.object({
+    sectionTitle: LocaleTextSchema,
+    allNewsLabel: LocaleTextSchema,
+    featuredIds: z.tuple([z.string(), z.string(), z.string(), z.string()]),
+  }),
+  equipment: z.object({
+    sectionTitle: LocaleTextSchema,
+    ctaLabel: LocaleTextSchema,
+    featuredIndices: z.tuple([
+      z.number().int().min(0).max(3),
+      z.number().int().min(0).max(3),
+      z.number().int().min(0).max(3),
+      z.number().int().min(0).max(3),
+    ]),
+  }),
+});
 
 const AboutContentSchema = z.object({
   backgroundImage: z.string(),
@@ -84,22 +116,40 @@ const ContactContentSchema = z.object({
   address: LocaleTextSchema,
 });
 
-type SupportedSlug = 'about' | 'mission' | 'equipment' | 'contact';
+type SupportedSlug = 'about' | 'mission' | 'equipment' | 'contact' | 'home';
 type PageContent =
   | AboutPageContent
   | MissionPageContent
   | EquipmentPageContent
-  | ContactPageContent;
+  | ContactPageContent
+  | HomePageContent;
 
 function isSupportedSlug(slug: string): slug is SupportedSlug {
-  return slug === 'about' || slug === 'mission' || slug === 'equipment' || slug === 'contact';
+  return (
+    slug === 'about' ||
+    slug === 'mission' ||
+    slug === 'equipment' ||
+    slug === 'contact' ||
+    slug === 'home'
+  );
 }
 
 function defaultFor(slug: SupportedSlug): PageContent {
   if (slug === 'about') return structuredClone(DEFAULT_ABOUT_CONTENT);
   if (slug === 'mission') return structuredClone(DEFAULT_MISSION_CONTENT);
   if (slug === 'equipment') return structuredClone(DEFAULT_EQUIPMENT_CONTENT);
+  if (slug === 'home') return structuredClone(DEFAULT_HOME_CONTENT);
   return structuredClone(DEFAULT_CONTACT_CONTENT);
+}
+
+function normalizeHomeContent(raw: unknown): HomePageContent {
+  const parsed = HomeContentSchema.safeParse(raw);
+  if (!parsed.success) return structuredClone(DEFAULT_HOME_CONTENT);
+  const ids = parsed.data.news.featuredIds;
+  if (new Set(ids).size !== 4) return structuredClone(DEFAULT_HOME_CONTENT);
+  const indices = parsed.data.equipment.featuredIndices;
+  if (new Set(indices).size !== 4) return structuredClone(DEFAULT_HOME_CONTENT);
+  return parsed.data;
 }
 
 function normalizeContent(slug: SupportedSlug, raw: unknown): PageContent {
@@ -117,6 +167,9 @@ function normalizeContent(slug: SupportedSlug, raw: unknown): PageContent {
     const parsed = EquipmentContentSchema.safeParse(raw);
     if (parsed.success) return parsed.data;
     return structuredClone(DEFAULT_EQUIPMENT_CONTENT);
+  }
+  if (slug === 'home') {
+    return normalizeHomeContent(raw);
   }
   const parsed = ContactContentSchema.safeParse(raw);
   if (parsed.success) return parsed.data;
@@ -138,6 +191,35 @@ function parseContent(
   if (slug === 'equipment') {
     const parsed = EquipmentContentSchema.safeParse(raw);
     return parsed.success ? { ok: true, data: parsed.data } : { ok: false, error: parsed.error };
+  }
+  if (slug === 'home') {
+    const parsed = HomeContentSchema.safeParse(raw);
+    if (!parsed.success) return { ok: false, error: parsed.error };
+    if (new Set(parsed.data.news.featuredIds).size !== 4) {
+      return {
+        ok: false,
+        error: new z.ZodError([
+          {
+            code: 'custom',
+            path: ['news', 'featuredIds'],
+            message: '首页新闻必须选择 4 条且互不重复',
+          },
+        ]),
+      };
+    }
+    if (new Set(parsed.data.equipment.featuredIndices).size !== 4) {
+      return {
+        ok: false,
+        error: new z.ZodError([
+          {
+            code: 'custom',
+            path: ['equipment', 'featuredIndices'],
+            message: '首页装备必须选择 4 项且互不重复',
+          },
+        ]),
+      };
+    }
+    return { ok: true, data: parsed.data };
   }
   const parsed = ContactContentSchema.safeParse(raw);
   return parsed.success ? { ok: true, data: parsed.data } : { ok: false, error: parsed.error };

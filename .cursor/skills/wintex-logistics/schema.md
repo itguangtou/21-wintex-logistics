@@ -43,9 +43,11 @@ CREATE TABLE IF NOT EXISTS pages (
 );
 ```
 
-API：`GET/PUT /api/pages/[slug]`（PUT 需登录；`mode: draft|publish`；已支持 `about` / `mission` / `equipment`）
+API：`GET/PUT /api/pages/[slug]`（PUT 需登录；`mode: draft|publish`；已支持 `about` / `mission` / `equipment` / `contact` / `home`）
 
 装备清单：`slug=equipment`，固定 4 图库 + 9 详情卡，管理端仅编辑不增删。种子：`npm run db:seed:equipment`
+
+首页：`slug=home`，分区 about / news(选4) / strength / equipment(选4)。种子：`npm run db:seed:home`
 Seed：`npm run db:seed:about` / `npm run db:seed:mission`
 
 ### `about` 的 `content` 形状

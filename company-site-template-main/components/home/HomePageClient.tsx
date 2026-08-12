@@ -17,6 +17,29 @@ type HomePageClientProps = {
     email: string;
     address: string;
   };
+  about: {
+    title: string;
+    subtitle: string;
+    desc: string;
+    ctaLabel: string;
+    image: string;
+  };
+  strength: {
+    title: string;
+    subtitle: string;
+    desc: string;
+    ctaLabel: string;
+    image: string;
+  };
+  newsSection: {
+    sectionTitle: string;
+    allNewsLabel: string;
+  };
+  equipmentSection: {
+    sectionTitle: string;
+    ctaLabel: string;
+    items: { image: string; name: string }[];
+  };
 };
 
 // 自定义 hook：检测元素是否进入视口，支持手动触发动画
@@ -76,7 +99,15 @@ function useInView(options = {}) {
   return [ref, isInView, triggerAnimation] as const;
 }
 
-export default function HomePageClient({ locale, newsItems, contact }: HomePageClientProps) {
+export default function HomePageClient({
+  locale,
+  newsItems,
+  contact,
+  about,
+  strength,
+  newsSection,
+  equipmentSection,
+}: HomePageClientProps) {
   const currentLocale = (locale as Locale) ?? 'zh';
   const t = useTranslations('home');
   
@@ -488,7 +519,7 @@ export default function HomePageClient({ locale, newsItems, contact }: HomePageC
                     transition: introSectionInView ? 'opacity 0.8s ease-out, transform 0.8s ease-out' : 'none'
                   }}
                 >
-                  {t('introTitle')}
+                  {about.title}
                 </h2>
                 <p 
                   className="text-subtitle text-brand-accent mb-6"
@@ -499,7 +530,7 @@ export default function HomePageClient({ locale, newsItems, contact }: HomePageC
                     transition: introSectionInView ? 'opacity 0.8s ease-out 0.1s, transform 0.8s ease-out 0.1s' : 'none'
                   }}
                 >
-                  {t('introSubtitle')}
+                  {about.subtitle}
                 </p>
                 <p 
                   className="text-body text-gray-400 mb-8"
@@ -510,7 +541,7 @@ export default function HomePageClient({ locale, newsItems, contact }: HomePageC
                     transition: introSectionInView ? 'opacity 0.8s ease-out 0.2s, transform 0.8s ease-out 0.2s' : 'none'
                   }}
                 >
-                  {t('introDesc')}
+                  {about.desc}
                 </p>
                 <Link 
                   href={`/${currentLocale}/about`} 
@@ -522,14 +553,14 @@ export default function HomePageClient({ locale, newsItems, contact }: HomePageC
                     transition: introSectionInView ? 'opacity 0.8s ease-out 0.3s, transform 0.8s ease-out 0.3s' : 'none'
                   }}
                 >
-                  {t('ctaPlan')}
+                  {about.ctaLabel}
                 </Link>
               </div>
 
               <div className="flex-1" style={{ maxWidth: '100%' }}>
                 <img
-                  src="/images/introduction.png"
-                  alt="Introduction"
+                  src={about.image}
+                  alt={about.title}
                   className="w-full h-auto rounded-lg"
                   style={{ 
                     maxWidth: '100%', 
@@ -558,7 +589,7 @@ export default function HomePageClient({ locale, newsItems, contact }: HomePageC
                 transition: newsSectionInView ? 'opacity 0.8s ease-out, transform 0.8s ease-out' : 'none'
               }}
             >
-              {t('newsTitle')}
+              {newsSection.sectionTitle}
             </h2>
             <Link 
               href={`/${currentLocale}/news`} 
@@ -567,7 +598,7 @@ export default function HomePageClient({ locale, newsItems, contact }: HomePageC
                 fontSize: 'clamp(12px, 2.25vw, 18px)',
               }}
             >
-              {t('allNews')}
+              {newsSection.allNewsLabel}
             </Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -626,8 +657,8 @@ export default function HomePageClient({ locale, newsItems, contact }: HomePageC
           <div className="flex flex-col md:flex-row gap-6 sm:gap-8 md:gap-[60px] items-start">
             <div className="flex-1" style={{ maxWidth: '100%', overflow: 'visible', display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start' }}>
               <img
-                src="/images/strength.png"
-                alt="Proof of Strength"
+                src={strength.image}
+                alt={strength.title}
                 className="rounded-lg"
                 style={{ 
                   maxWidth: '100%', 
@@ -653,7 +684,7 @@ export default function HomePageClient({ locale, newsItems, contact }: HomePageC
                     transition: strengthSectionInView ? 'opacity 0.8s ease-out 0.2s, transform 0.8s ease-out 0.2s' : 'none'
                   }}
                 >
-                  {t('strengthTitle')}
+                  {strength.title}
                 </h2>
                 <p 
                   className="text-subtitle text-brand-accent mb-6"
@@ -664,7 +695,7 @@ export default function HomePageClient({ locale, newsItems, contact }: HomePageC
                     transition: strengthSectionInView ? 'opacity 0.8s ease-out 0.3s, transform 0.8s ease-out 0.3s' : 'none'
                   }}
                 >
-                  {t('strengthSubtitle')}
+                  {strength.subtitle}
                 </p>
                 <p 
                   className="text-body text-gray-400 mb-8"
@@ -675,7 +706,7 @@ export default function HomePageClient({ locale, newsItems, contact }: HomePageC
                     transition: strengthSectionInView ? 'opacity 0.8s ease-out 0.4s, transform 0.8s ease-out 0.4s' : 'none'
                   }}
                 >
-                  {t('strengthDesc')}
+                  {strength.desc}
                 </p>
                 <Link 
                   href={`/${currentLocale}/mission`} 
@@ -689,7 +720,7 @@ export default function HomePageClient({ locale, newsItems, contact }: HomePageC
                     zIndex: 20
                   }}
                 >
-                  {t('readMore')}
+                  {strength.ctaLabel}
                 </Link>
               </div>
             </div>
@@ -714,7 +745,7 @@ export default function HomePageClient({ locale, newsItems, contact }: HomePageC
                   maxWidth: 'calc(100% - 100px)'
                 }}
               >
-                {t('equipmentListTitle')}
+                {equipmentSection.sectionTitle}
               </h2>
               <Link 
                 href={`/${currentLocale}/equipment`} 
@@ -723,16 +754,11 @@ export default function HomePageClient({ locale, newsItems, contact }: HomePageC
                   fontSize: 'clamp(10px, 2vw, 18px)',
                 }}
               >
-                {t('readMore')}
+                {equipmentSection.ctaLabel}
               </Link>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-              {[
-                { img: '/images/equipment_1.jpg', name: t('equip1Name') },
-                { img: '/images/equipment_2.jpg', name: t('equip2Name') },
-                { img: '/images/equipment_3.jpg', name: t('equip3Name') },
-                { img: '/images/equipment_4.jpg', name: t('equip4Name') },
-              ].map((equip, i) => (
+              {equipmentSection.items.map((equip, i) => (
                 <div
                   key={i}
                   className="bg-white rounded-lg overflow-hidden"
@@ -740,7 +766,7 @@ export default function HomePageClient({ locale, newsItems, contact }: HomePageC
                   <div className="aspect-video" style={{ maxWidth: '100%' }}>
                     <img
                       ref={equipmentRefs[i]}
-                      src={equip.img}
+                      src={equip.image}
                       alt={equip.name}
                       className="w-full h-full object-cover"
                       style={{ 
