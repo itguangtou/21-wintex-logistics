@@ -108,16 +108,19 @@ export default function NewsEditor() {
       setLoading(true);
       setError(null);
       try {
-        const listRes = await fetch('/api/news?all=1', { credentials: 'include', cache: 'no-store' });
-        const list = await listRes.json().catch(() => ({}));
-        if (!mounted) return;
-        if (listRes.status === 401) {
-          await logout();
-          throw new Error(list?.error || '登录已过期');
-        }
-        const count = Array.isArray(list?.items) ? list.items.length : 0;
-
         if (isNew) {
+          // 新建才需要列表计数，避免编辑页多打一次 ?all=1
+          const listRes = await fetch('/api/news?all=1', {
+            credentials: 'include',
+            cache: 'no-store',
+          });
+          const list = await listRes.json().catch(() => ({}));
+          if (!mounted) return;
+          if (listRes.status === 401) {
+            await logout();
+            throw new Error(list?.error || '登录已过期');
+          }
+          const count = Array.isArray(list?.items) ? list.items.length : 0;
           const max = count + 1;
           setSortMax(max);
           const local = readLocalDraft();
@@ -132,14 +135,22 @@ export default function NewsEditor() {
             setDraft(emptyNewDraft(max));
           }
         } else {
-          setSortMax(Math.max(1, count));
-          const detailRes = await fetch(`/api/news/${id}`, { credentials: 'include', cache: 'no-store' });
+          const detailRes = await fetch(`/api/news/${id}`, {
+            credentials: 'include',
+            cache: 'no-store',
+          });
           const detail = await detailRes.json().catch(() => ({}));
           if (!mounted) return;
+          if (detailRes.status === 401) {
+            await logout();
+            throw new Error(detail?.error || '登录已过期');
+          }
           if (!detailRes.ok) throw new Error(detail?.error || `HTTP ${detailRes.status}`);
           if (detail?.item) {
             const next = fromArticle(detail.item);
-            next.sort_order = clampSort(next.sort_order, Math.max(1, count));
+            const max = Math.max(1, next.sort_order, 20);
+            setSortMax(max);
+            next.sort_order = clampSort(next.sort_order, max);
             setDraft(next);
           }
         }

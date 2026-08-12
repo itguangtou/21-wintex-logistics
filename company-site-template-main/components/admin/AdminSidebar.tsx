@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ADMIN_NAV, ADMIN_NAV_GROUPS, type AdminNavItem } from './nav';
 
@@ -92,10 +91,10 @@ function NavIcon({ href, active }: { href: string; active: boolean }) {
 
 function NavLink({ item, pathname }: { item: AdminNavItem; pathname: string }) {
   const active = isActive(pathname, item.href);
+  // 用原生 <a>，避免 Next Link 预取其它管理页 RSC（刷新时打一串 ?_rsc）
   return (
-    <Link
+    <a
       href={item.href}
-      prefetch={false}
       className={[
         'group relative flex items-center gap-3 rounded-lg mx-2 px-3 py-2.5 text-[13px] font-medium transition-colors',
         active
@@ -110,7 +109,7 @@ function NavLink({ item, pathname }: { item: AdminNavItem; pathname: string }) {
         <NavIcon href={item.href} active={active} />
       </span>
       <span className="truncate">{item.label}</span>
-    </Link>
+    </a>
   );
 }
 

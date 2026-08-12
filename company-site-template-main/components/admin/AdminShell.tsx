@@ -1,7 +1,6 @@
 'use client';
 
-import React from 'react';
-import Link from 'next/link';
+import type { ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import AdminSidebar from './AdminSidebar';
 import AdminHeader from './AdminHeader';
@@ -17,17 +16,16 @@ function MobileNav() {
         {ADMIN_NAV.map((item) => {
           const active = pathname === item.href || pathname.startsWith(item.href + '/');
           return (
-            <Link
+            <a
               key={item.href}
               href={item.href}
-              prefetch={false}
               className={[
                 'px-3 py-1.5 rounded-md text-xs whitespace-nowrap transition-colors',
                 active ? 'bg-[#F7B959] text-[#0E2745] font-semibold' : 'bg-white/10 text-white/80',
               ].join(' ')}
             >
               {item.label}
-            </Link>
+            </a>
           );
         })}
       </div>
@@ -35,7 +33,7 @@ function MobileNav() {
   );
 }
 
-export default function AdminShell({ children }: { children: React.ReactNode }) {
+export default function AdminShell({ children }: { children: ReactNode }) {
   return (
     <AdminChromeProvider>
       <div className="h-screen overflow-hidden flex bg-[#F5F7FA]">
