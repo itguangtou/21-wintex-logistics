@@ -119,8 +119,8 @@ export default function NewsEditor() {
   }
 
   return (
-    <div className="p-6 lg:p-8 max-w-5xl space-y-6">
-      <div className="flex flex-wrap items-center gap-3">
+    <div className="p-6 lg:p-8 max-w-6xl space-y-6">
+      <div className="flex flex-wrap items-center gap-3 sticky top-0 z-10 bg-[#F5F7FA] py-3 -mt-2">
         <button
           type="button"
           onClick={() => router.push('/admin/news')}
@@ -148,28 +148,7 @@ export default function NewsEditor() {
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-4">
-        <ImageReplaceField
-          label="封面 / 详情图"
-          value={draft.image_url}
-          slot={`news/${id}/cover`}
-          onChange={(url) => setDraft((d) => ({ ...d, image_url: url }))}
-        />
-        <BilingualField
-          label="标题"
-          zh={draft.title_zh}
-          en={draft.title_en}
-          onZhChange={(v) => setDraft((d) => ({ ...d, title_zh: v }))}
-          onEnChange={(v) => setDraft((d) => ({ ...d, title_en: v }))}
-        />
-        <BilingualField
-          label="正文（支持简单 HTML：strong / ul / li）"
-          zh={draft.content_zh}
-          en={draft.content_en}
-          multiline
-          onZhChange={(v) => setDraft((d) => ({ ...d, content_zh: v }))}
-          onEnChange={(v) => setDraft((d) => ({ ...d, content_en: v }))}
-        />
+      <div className="rounded-xl border border-gray-200 bg-white p-5 md:p-6 space-y-6">
         <div className="grid md:grid-cols-3 gap-4">
           <label className="grid gap-1">
             <span className="text-sm font-medium text-gray-700">发布日期</span>
@@ -198,6 +177,33 @@ export default function NewsEditor() {
             <span className="text-sm text-gray-700">已发布</span>
           </label>
         </div>
+
+        <ImageReplaceField
+          label="封面 / 详情图"
+          value={draft.image_url}
+          slot={`news/${id}/cover`}
+          onChange={(url) => setDraft((d) => ({ ...d, image_url: url }))}
+        />
+
+        <BilingualField
+          label="标题"
+          zh={draft.title_zh}
+          en={draft.title_en}
+          onZhChange={(v) => setDraft((d) => ({ ...d, title_zh: v }))}
+          onEnChange={(v) => setDraft((d) => ({ ...d, title_en: v }))}
+        />
+
+        <BilingualField
+          label="正文（支持简单 HTML：strong / ul / li）"
+          zh={draft.content_zh}
+          en={draft.content_en}
+          multiline
+          stacked
+          rows={22}
+          minHeightClass="min-h-[420px]"
+          onZhChange={(v) => setDraft((d) => ({ ...d, content_zh: v }))}
+          onEnChange={(v) => setDraft((d) => ({ ...d, content_en: v }))}
+        />
       </div>
     </div>
   );
