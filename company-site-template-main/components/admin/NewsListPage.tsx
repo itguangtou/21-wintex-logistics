@@ -109,8 +109,9 @@ export default function NewsListPage() {
         throw new Error(j?.error || '登录已过期');
       }
       if (!res.ok) throw new Error(j?.error || '操作失败，请稍后重试');
-      await load();
       message.success('已删除');
+      // 先弹提示再刷新列表：避免某些情况下 load 触发重渲染后用户看不到 toast
+      await load();
     } catch (e: unknown) {
       message.error(e instanceof Error ? e.message : '删除失败');
     } finally {
@@ -135,8 +136,8 @@ export default function NewsListPage() {
         throw new Error(j?.error || '登录已过期');
       }
       if (!res.ok) throw new Error(j?.error || '操作失败，请稍后重试');
-      await load();
       message.success('顺序已更新');
+      await load();
     } catch (e: unknown) {
       message.error(e instanceof Error ? e.message : '调整顺序失败');
     } finally {
