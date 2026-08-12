@@ -99,7 +99,7 @@ export default function HomePageEditor() {
 
         setData(homeJ.content ? structuredClone(homeJ.content) : cloneDefault());
 
-        const list: NewsOption[] = Array.isArray(newsJ)
+        const list: any[] = Array.isArray(newsJ)
           ? newsJ
           : Array.isArray(newsJ?.items)
             ? newsJ.items
