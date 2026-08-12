@@ -20,6 +20,7 @@ function MobileNav() {
             <Link
               key={item.href}
               href={item.href}
+              prefetch={false}
               className={[
                 'px-3 py-1.5 rounded-md text-xs whitespace-nowrap transition-colors',
                 active ? 'bg-[#F7B959] text-[#0E2745] font-semibold' : 'bg-white/10 text-white/80',

@@ -95,6 +95,7 @@ function NavLink({ item, pathname }: { item: AdminNavItem; pathname: string }) {
   return (
     <Link
       href={item.href}
+      prefetch={false}
       className={[
         'group relative flex items-center gap-3 rounded-lg mx-2 px-3 py-2.5 text-[13px] font-medium transition-colors',
         active
