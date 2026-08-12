@@ -2,34 +2,17 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ADMIN_NAV, type AdminNavItem } from './nav';
+import { ADMIN_NAV, ADMIN_NAV_GROUPS, type AdminNavItem } from './nav';
 
 function isActive(pathname: string, href: string) {
   if (pathname === href) return true;
-  if (href !== '/admin/news' && pathname.startsWith(href + '/')) return true;
   if (href === '/admin/news' && pathname.startsWith('/admin/news')) return true;
+  if (href === '/admin/pages/equipment' && pathname.startsWith('/admin/equipment-items')) {
+    return true;
+  }
+  if (href !== '/admin/news' && pathname.startsWith(href + '/')) return true;
   return false;
 }
-
-const NAV_GROUPS: { title: string; hrefs: string[] }[] = [
-  {
-    title: '页面',
-    hrefs: [
-      '/admin/pages/home',
-      '/admin/pages/about',
-      '/admin/pages/mission',
-      '/admin/pages/equipment',
-    ],
-  },
-  {
-    title: '内容',
-    hrefs: ['/admin/news', '/admin/equipment-items', '/admin/careers'],
-  },
-  {
-    title: '系统',
-    hrefs: ['/admin/settings', '/admin/media'],
-  },
-];
 
 function NavIcon({ href, active }: { href: string; active: boolean }) {
   const stroke = active ? '#F7B959' : 'currentColor';
@@ -82,22 +65,6 @@ function NavIcon({ href, active }: { href: string; active: boolean }) {
           <path d="M4 5h12v14H4z" />
           <path d="M16 8h4v11a2 2 0 0 1-2 2h-2" />
           <path d="M7 9h6M7 13h6M7 17h4" />
-        </svg>
-      );
-    case '/admin/timeline':
-      return (
-        <svg {...common}>
-          <path d="M12 4v16" />
-          <circle cx="12" cy="8" r="2.5" />
-          <circle cx="12" cy="16" r="2.5" />
-        </svg>
-      );
-    case '/admin/equipment-items':
-      return (
-        <svg {...common}>
-          <path d="M4 7h16v12H4z" />
-          <path d="M8 7V5h8v2" />
-          <path d="M8 12h8M8 16h5" />
         </svg>
       );
     case '/admin/careers':
@@ -170,7 +137,7 @@ export default function AdminSidebar() {
       </div>
 
       <nav className="flex-1 overflow-y-auto py-4 space-y-5">
-        {NAV_GROUPS.map((group) => (
+        {ADMIN_NAV_GROUPS.map((group) => (
           <div key={group.title}>
             <p className="px-5 mb-1.5 text-[10px] font-medium uppercase tracking-[0.14em] text-white/35">
               {group.title}
