@@ -93,7 +93,7 @@ export function buildNewsPreview(article: NewsArticle, locale: 'zh' | 'en'): New
   };
 }
 
-export const NEWS_PAGE_SIZE = 6;
+export const NEWS_PAGE_SIZE = 4;
 
 export type NewsPageResult = {
   items: NewsArticle[];

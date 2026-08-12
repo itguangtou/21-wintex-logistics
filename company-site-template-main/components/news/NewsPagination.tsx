@@ -52,7 +52,7 @@ export default function NewsPagination({
 
   return (
     <nav
-      className="mt-14 flex flex-wrap items-center justify-center gap-2"
+      className="mt-10 flex flex-wrap items-center justify-end gap-2"
       aria-label={locale === 'en' ? 'News pagination' : '新闻分页'}
     >
       {prevDisabled ? (
