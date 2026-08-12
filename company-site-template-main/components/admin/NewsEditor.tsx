@@ -42,6 +42,12 @@ function fromArticle(a: NewsArticle): Draft {
   };
 }
 
+function clampSort(value: number, max: number): number {
+  const n = Math.max(1, max);
+  if (!Number.isFinite(value)) return 1;
+  return Math.min(n, Math.max(1, Math.trunc(value)));
+}
+
 export default function NewsEditor() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -50,6 +56,7 @@ export default function NewsEditor() {
   const id = params?.id || '';
 
   const [draft, setDraft] = useState<Draft>(emptyDraft());
+  const [totalCount, setTotalCount] = useState(1);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -62,11 +69,21 @@ export default function NewsEditor() {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/api/news/${id}`, { credentials: 'include', cache: 'no-store' });
-        const j = await res.json().catch(() => ({}));
+        const [detailRes, listRes] = await Promise.all([
+          fetch(`/api/news/${id}`, { credentials: 'include', cache: 'no-store' }),
+          fetch('/api/news?all=1', { credentials: 'include', cache: 'no-store' }),
+        ]);
+        const detail = await detailRes.json().catch(() => ({}));
+        const list = await listRes.json().catch(() => ({}));
         if (!mounted) return;
-        if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
-        if (j?.item) setDraft(fromArticle(j.item));
+        if (!detailRes.ok) throw new Error(detail?.error || `HTTP ${detailRes.status}`);
+        const count = Array.isArray(list?.items) ? list.items.length : 1;
+        setTotalCount(Math.max(1, count));
+        if (detail?.item) {
+          const next = fromArticle(detail.item);
+          next.sort_order = clampSort(next.sort_order, count);
+          setDraft(next);
+        }
       } catch (e: unknown) {
         if (!mounted) return;
         setError(e instanceof Error ? e.message : '加载失败');
@@ -85,8 +102,10 @@ export default function NewsEditor() {
     setMessage(null);
     setError(null);
     try {
+      const sort_order = clampSort(draft.sort_order, totalCount);
       const body = {
         ...draft,
+        sort_order,
         published_at: draft.published_at || null,
         is_published: true,
       };
@@ -102,7 +121,11 @@ export default function NewsEditor() {
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
       if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
-      if (j?.item) setDraft(fromArticle(j.item));
+      if (j?.item) {
+        const next = fromArticle(j.item);
+        next.sort_order = clampSort(next.sort_order, totalCount);
+        setDraft(next);
+      }
       setMessage('已保存（前台刷新可见）');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '保存失败');
@@ -149,13 +172,27 @@ export default function NewsEditor() {
             />
           </label>
           <label className="grid gap-1">
-            <span className="text-sm font-medium text-gray-700">排序位置（1 最前；保存后自动重排为连续 1…n）</span>
+            <span className="text-sm font-medium text-gray-700">
+              排序位置（仅允许 1～{totalCount}，1 最前）
+            </span>
             <input
               type="number"
               min={1}
+              max={totalCount}
+              step={1}
               className="border rounded-lg px-3 py-2 text-sm outline-none focus:border-[#0E2745] focus:ring-2 focus:ring-[#0E2745]/15"
               value={draft.sort_order}
-              onChange={(e) => setDraft((d) => ({ ...d, sort_order: Number(e.target.value) || 1 }))}
+              onChange={(e) => {
+                const raw = e.target.value;
+                if (raw === '') {
+                  setDraft((d) => ({ ...d, sort_order: 1 }));
+                  return;
+                }
+                setDraft((d) => ({ ...d, sort_order: clampSort(Number(raw), totalCount) }));
+              }}
+              onBlur={() =>
+                setDraft((d) => ({ ...d, sort_order: clampSort(d.sort_order, totalCount) }))
+              }
             />
           </label>
         </div>
