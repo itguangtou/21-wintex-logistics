@@ -75,19 +75,10 @@ function NavIcon({ href, active }: { href: string; active: boolean }) {
           <path d="M3 13h18" />
         </svg>
       );
-    case '/admin/settings':
+    case '/admin/pages/contact':
       return (
         <svg {...common}>
-          <circle cx="12" cy="12" r="3" />
-          <path d="M12 3v2.5M12 18.5V21M4.9 6.5l1.8 1.8M17.3 15.7l1.8 1.8M3 12h2.5M18.5 12H21M4.9 17.5l1.8-1.8M17.3 8.3l1.8-1.8" />
-        </svg>
-      );
-    case '/admin/media':
-      return (
-        <svg {...common}>
-          <rect x="3" y="5" width="18" height="14" rx="2" />
-          <circle cx="9" cy="11" r="2" />
-          <path d="m21 16-4.5-4.5L9 19" />
+          <path d="M22 16.92v2a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h2a2 2 0 0 1 2 1.72c.12.9.33 1.77.62 2.6a2 2 0 0 1-.45 2.11L7.09 9.91a16 16 0 0 0 6 6l1.48-1.48a2 2 0 0 1 2.11-.45c.83.29 1.7.5 2.6.62A2 2 0 0 1 22 16.92z" />
         </svg>
       );
     default:

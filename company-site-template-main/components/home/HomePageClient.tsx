@@ -11,6 +11,12 @@ import type { NewsPreview } from '@/lib/newsContent';
 type HomePageClientProps = {
   locale: string;
   newsItems: NewsPreview[];
+  contact: {
+    title: string;
+    tel: string;
+    email: string;
+    address: string;
+  };
 };
 
 // 自定义 hook：检测元素是否进入视口，支持手动触发动画
@@ -70,7 +76,7 @@ function useInView(options = {}) {
   return [ref, isInView, triggerAnimation] as const;
 }
 
-export default function HomePageClient({ locale, newsItems }: HomePageClientProps) {
+export default function HomePageClient({ locale, newsItems, contact }: HomePageClientProps) {
   const currentLocale = (locale as Locale) ?? 'zh';
   const t = useTranslations('home');
   
@@ -771,19 +777,19 @@ export default function HomePageClient({ locale, newsItems }: HomePageClientProp
           <div className="max-w-[1287px] mx-auto" style={{ maxWidth: '100%' }}>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 sm:gap-12 mb-6 sm:mb-8">
               <div>
-                <h3 className="text-1xl md:text-2xl lg:text-3xl font-bold text-brand-primary mb-6 leading-tight">{t('contactUsTitle')}</h3>
+                <h3 className="text-1xl md:text-2xl lg:text-3xl font-bold text-brand-primary mb-6 leading-tight">{contact.title}</h3>
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <img src="/icons/Phone.svg" alt="Phone" className="w-[30px] h-[30px]" style={{ maxWidth: '100%', height: 'auto' }} />
-                    <span className="text-body text-gray-500 text-[1.035em] md:text-[1.15em]">{t('contactTel')}</span>
+                    <span className="text-body text-gray-500 text-[1.035em] md:text-[1.15em]">{contact.tel}</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <img src="/icons/Mail.svg" alt="Mail" className="w-[30px] h-[30px]" style={{ maxWidth: '100%', height: 'auto' }} />
-                    <span className="text-body text-gray-500 text-[1.035em] md:text-[1.15em]">{t('contactEmail')}</span>
+                    <span className="text-body text-gray-500 text-[1.035em] md:text-[1.15em]">{contact.email}</span>
                   </div>
                   <div className="flex items-center gap-3">
                     <img src="/icons/Map pin.svg" alt="Map pin" className="w-[30px] h-[30px]" style={{ maxWidth: '100%', height: 'auto' }} />
-                    <span className="text-body text-gray-500 text-[1.035em] md:text-[1.15em]">{t('contactAddress')}</span>
+                    <span className="text-body text-gray-500 text-[1.035em] md:text-[1.15em]">{contact.address}</span>
                   </div>
                 </div>
               </div>

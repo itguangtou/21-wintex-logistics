@@ -8,6 +8,10 @@ import {
   DEFAULT_EQUIPMENT_CONTENT,
   type EquipmentPageContent,
 } from '@/lib/equipmentPageContent';
+import {
+  DEFAULT_CONTACT_CONTENT,
+  type ContactPageContent,
+} from '@/lib/contactContent';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -73,17 +77,29 @@ const EquipmentContentSchema = z.object({
   }),
 });
 
-type SupportedSlug = 'about' | 'mission' | 'equipment';
-type PageContent = AboutPageContent | MissionPageContent | EquipmentPageContent;
+const ContactContentSchema = z.object({
+  title: LocaleTextSchema,
+  tel: LocaleTextSchema,
+  email: LocaleTextSchema,
+  address: LocaleTextSchema,
+});
+
+type SupportedSlug = 'about' | 'mission' | 'equipment' | 'contact';
+type PageContent =
+  | AboutPageContent
+  | MissionPageContent
+  | EquipmentPageContent
+  | ContactPageContent;
 
 function isSupportedSlug(slug: string): slug is SupportedSlug {
-  return slug === 'about' || slug === 'mission' || slug === 'equipment';
+  return slug === 'about' || slug === 'mission' || slug === 'equipment' || slug === 'contact';
 }
 
 function defaultFor(slug: SupportedSlug): PageContent {
   if (slug === 'about') return structuredClone(DEFAULT_ABOUT_CONTENT);
   if (slug === 'mission') return structuredClone(DEFAULT_MISSION_CONTENT);
-  return structuredClone(DEFAULT_EQUIPMENT_CONTENT);
+  if (slug === 'equipment') return structuredClone(DEFAULT_EQUIPMENT_CONTENT);
+  return structuredClone(DEFAULT_CONTACT_CONTENT);
 }
 
 function normalizeContent(slug: SupportedSlug, raw: unknown): PageContent {
@@ -97,9 +113,14 @@ function normalizeContent(slug: SupportedSlug, raw: unknown): PageContent {
     if (parsed.success) return parsed.data;
     return structuredClone(DEFAULT_MISSION_CONTENT);
   }
-  const parsed = EquipmentContentSchema.safeParse(raw);
+  if (slug === 'equipment') {
+    const parsed = EquipmentContentSchema.safeParse(raw);
+    if (parsed.success) return parsed.data;
+    return structuredClone(DEFAULT_EQUIPMENT_CONTENT);
+  }
+  const parsed = ContactContentSchema.safeParse(raw);
   if (parsed.success) return parsed.data;
-  return structuredClone(DEFAULT_EQUIPMENT_CONTENT);
+  return structuredClone(DEFAULT_CONTACT_CONTENT);
 }
 
 function parseContent(
@@ -114,7 +135,11 @@ function parseContent(
     const parsed = MissionContentSchema.safeParse(raw);
     return parsed.success ? { ok: true, data: parsed.data } : { ok: false, error: parsed.error };
   }
-  const parsed = EquipmentContentSchema.safeParse(raw);
+  if (slug === 'equipment') {
+    const parsed = EquipmentContentSchema.safeParse(raw);
+    return parsed.success ? { ok: true, data: parsed.data } : { ok: false, error: parsed.error };
+  }
+  const parsed = ContactContentSchema.safeParse(raw);
   return parsed.success ? { ok: true, data: parsed.data } : { ok: false, error: parsed.error };
 }
 

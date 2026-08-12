@@ -5,7 +5,7 @@ export type AdminNavItem = {
   ready?: boolean;
 };
 
-/** 与官网顶栏顺序对齐：首页 + 关于我们 → … → 招聘；系统单独一组 */
+/** 单一内容模块，顺序对齐官网顶栏 + 联系我们 */
 export const ADMIN_NAV: AdminNavItem[] = [
   { href: '/admin/pages/home', label: '首页', ready: false },
   { href: '/admin/pages/about', label: '关于我们', ready: true },
@@ -13,26 +13,14 @@ export const ADMIN_NAV: AdminNavItem[] = [
   { href: '/admin/news', label: '新闻', ready: true },
   { href: '/admin/pages/equipment', label: '装备清单', ready: true },
   { href: '/admin/careers', label: '招贤纳士', ready: true },
-  { href: '/admin/settings', label: '站点设置', ready: false },
-  { href: '/admin/media', label: '媒体库', ready: false },
+  { href: '/admin/pages/contact', label: '联系我们', ready: true },
 ];
 
-/** 侧栏分组：页面+内容合并；系统单独 */
+/** 侧栏仅一组 */
 export const ADMIN_NAV_GROUPS: { title: string; hrefs: string[] }[] = [
   {
     title: '内容',
-    hrefs: [
-      '/admin/pages/home',
-      '/admin/pages/about',
-      '/admin/pages/mission',
-      '/admin/news',
-      '/admin/pages/equipment',
-      '/admin/careers',
-    ],
-  },
-  {
-    title: '系统',
-    hrefs: ['/admin/settings', '/admin/media'],
+    hrefs: ADMIN_NAV.map((item) => item.href),
   },
 ];
 
@@ -47,8 +35,7 @@ export function resolveAdminTitle(pathname: string): string {
   if (pathname.startsWith('/admin/pages/mission')) return '实力见证';
   if (pathname.startsWith('/admin/pages/equipment')) return '装备清单';
   if (pathname.startsWith('/admin/equipment-items')) return '装备清单';
-  if (pathname.startsWith('/admin/settings')) return '站点设置';
-  if (pathname.startsWith('/admin/media')) return '媒体库';
+  if (pathname.startsWith('/admin/pages/contact')) return '联系我们';
 
   return '管理端';
 }

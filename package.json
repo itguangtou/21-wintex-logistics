@@ -10,6 +10,7 @@
     "db:seed:about": "node scripts/seed-about-page.mjs",
     "db:seed:mission": "node scripts/seed-mission.mjs",
     "db:seed:news": "node scripts/seed-news.mjs",
+    "db:seed:contact": "node scripts/seed-contact.mjs",
     "db:seed:equipment": "node scripts/seed-equipment.mjs",
     "db:ensure:media": "node scripts/ensure-media-bucket.mjs"
   },
