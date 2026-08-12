@@ -201,15 +201,23 @@ export default function EquipmentPageEditor() {
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>
 
-      <section className="rounded-xl border border-gray-200 bg-white p-4 space-y-3">
-        <h2 className="text-base font-semibold text-[#0E2745]">页头标题</h2>
-        <BilingualField
-          label="页面标题"
-          zh={data.pageTitle.zh}
-          en={data.pageTitle.en}
-          onZhChange={(v) => patchTitle('zh', v)}
-          onEnChange={(v) => patchTitle('en', v)}
-        />
+      <section>
+        <h2 className="text-base font-semibold text-[#0E2745] mb-3">页头标题</h2>
+        <ul className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+          <AccordionItem
+            name={data.pageTitle.zh?.trim() || data.pageTitle.en?.trim() || '页面标题'}
+            open={openHeader}
+            onToggle={() => setOpenHeader((v) => !v)}
+          >
+            <BilingualField
+              label="页面标题"
+              zh={data.pageTitle.zh}
+              en={data.pageTitle.en}
+              onZhChange={(v) => patchTitle('zh', v)}
+              onEnChange={(v) => patchTitle('en', v)}
+            />
+          </AccordionItem>
+        </ul>
       </section>
 
       <section>
