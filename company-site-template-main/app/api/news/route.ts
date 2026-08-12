@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getSupabaseAdmin, hasSupabaseConfig } from '@/lib/supabase';
 import { requireAdminSession } from '@/lib/auth';
 import { defaultNewsArticles, mapNewsRow } from '@/lib/newsContent';
+import { placeNewNewsAt } from '@/lib/newsSort';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -29,9 +30,11 @@ function noStoreJson(body: unknown, init?: { status?: number }) {
   });
 }
 
+const NEWS_COLS =
+  'id, title_zh, title_en, content_zh, content_en, image_url, published_at, sort_order, is_published, updated_at';
+
 export async function GET(req: NextRequest) {
   const admin = !!req.nextUrl.searchParams.get('all');
-  // all=1 仅管理端；未登录时忽略 all
   let wantAll = false;
   if (admin) {
     try {
@@ -51,9 +54,7 @@ export async function GET(req: NextRequest) {
     const supabase = getSupabaseAdmin();
     let q = supabase
       .from('news')
-      .select(
-        'id, title_zh, title_en, content_zh, content_en, image_url, published_at, sort_order, is_published, updated_at'
-      )
+      .select(NEWS_COLS)
       .order('sort_order', { ascending: true })
       .order('published_at', { ascending: false });
 
@@ -93,18 +94,9 @@ export async function POST(req: NextRequest) {
     }
 
     const supabase = getSupabaseAdmin();
-    let sort_order = parsed.data.sort_order;
-    if (sort_order == null) {
-      const { data: last } = await supabase
-        .from('news')
-        .select('sort_order')
-        .order('sort_order', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      sort_order = (last?.sort_order ?? 0) + 1;
-    }
-
     const id = parsed.data.id?.trim() || `n-${Date.now()}`;
+
+    // 先插入末尾占位，再按目标位重排为连续 1..n
     const insert = {
       id,
       title_zh: parsed.data.title_zh,
@@ -113,20 +105,18 @@ export async function POST(req: NextRequest) {
       content_en: parsed.data.content_en,
       image_url: parsed.data.image_url,
       published_at: parsed.data.published_at || null,
-      sort_order,
-      // 有记录即前台可见；删除即消失，不再做草稿态
+      sort_order: 999999,
       is_published: true,
     };
 
-    const { data, error } = await supabase
-      .from('news')
-      .insert(insert)
-      .select(
-        'id, title_zh, title_en, content_zh, content_en, image_url, published_at, sort_order, is_published, updated_at'
-      )
-      .single();
-
+    const { error } = await supabase.from('news').insert(insert);
     if (error) return noStoreJson({ error: error.message }, { status: 500 });
+
+    await placeNewNewsAt(supabase, id, parsed.data.sort_order ?? null);
+
+    const { data, error: readErr } = await supabase.from('news').select(NEWS_COLS).eq('id', id).single();
+    if (readErr) return noStoreJson({ error: readErr.message }, { status: 500 });
+
     return noStoreJson({ ok: true, item: mapNewsRow(data as Record<string, unknown>) });
   } catch (e: any) {
     const status = e?.status === 401 ? 401 : 500;

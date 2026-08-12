@@ -119,6 +119,32 @@ export default function NewsListPage() {
     }
   };
 
+  const handleMove = async (row: NewsArticle, direction: 'up' | 'down') => {
+    const target = row.sort_order + (direction === 'up' ? -1 : 1);
+    if (target < 1 || target > rows.length) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/news/${row.id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ sort_order: target }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (res.status === 401) {
+        await logout();
+        throw new Error(j?.error || '登录已过期');
+      }
+      if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
+      await load();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : '调整顺序失败');
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const columns: DataTableColumn<NewsArticle>[] = [
     {
       key: 'title',
@@ -146,31 +172,56 @@ export default function NewsListPage() {
       key: 'actions',
       header: '操作',
       className: 'whitespace-nowrap',
-      render: (row) => (
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            className="text-[#0E2745] hover:underline text-sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              router.push(`/admin/news/${row.id}`);
-            }}
-          >
-            编辑
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            className="text-red-600 hover:underline text-sm disabled:opacity-50"
-            onClick={(e) => {
-              e.stopPropagation();
-              void handleDelete(row);
-            }}
-          >
-            删除
-          </button>
-        </div>
-      ),
+      render: (row) => {
+        const index = rows.findIndex((r) => r.id === row.id);
+        return (
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              disabled={busy || index <= 0}
+              className="text-[#0E2745] hover:underline text-sm disabled:opacity-30"
+              onClick={(e) => {
+                e.stopPropagation();
+                void handleMove(row, 'up');
+              }}
+            >
+              上移
+            </button>
+            <button
+              type="button"
+              disabled={busy || index < 0 || index >= rows.length - 1}
+              className="text-[#0E2745] hover:underline text-sm disabled:opacity-30"
+              onClick={(e) => {
+                e.stopPropagation();
+                void handleMove(row, 'down');
+              }}
+            >
+              下移
+            </button>
+            <button
+              type="button"
+              className="text-[#0E2745] hover:underline text-sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                router.push(`/admin/news/${row.id}`);
+              }}
+            >
+              编辑
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              className="text-red-600 hover:underline text-sm disabled:opacity-50"
+              onClick={(e) => {
+                e.stopPropagation();
+                void handleDelete(row);
+              }}
+            >
+              删除
+            </button>
+          </div>
+        );
+      },
     },
   ];
 

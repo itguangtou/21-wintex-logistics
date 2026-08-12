@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { getSupabaseAdmin, hasSupabaseConfig } from '@/lib/supabase';
 import { requireAdminSession } from '@/lib/auth';
 import { defaultNewsArticles, mapNewsRow } from '@/lib/newsContent';
+import { normalizeNewsSortOrder, placeNewNewsAt, placeNewsAt } from '@/lib/newsSort';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -28,6 +29,9 @@ function noStoreJson(body: unknown, init?: { status?: number }) {
   });
 }
 
+const NEWS_COLS =
+  'id, title_zh, title_en, content_zh, content_en, image_url, published_at, sort_order, is_published, updated_at';
+
 type RouteCtx = { params: { id: string } };
 
 export async function GET(_req: NextRequest, ctx: RouteCtx) {
@@ -42,13 +46,7 @@ export async function GET(_req: NextRequest, ctx: RouteCtx) {
 
   try {
     const supabase = getSupabaseAdmin();
-    const { data, error } = await supabase
-      .from('news')
-      .select(
-        'id, title_zh, title_en, content_zh, content_en, image_url, published_at, sort_order, is_published, updated_at'
-      )
-      .eq('id', id)
-      .maybeSingle();
+    const { data, error } = await supabase.from('news').select(NEWS_COLS).eq('id', id).maybeSingle();
 
     if (error) return noStoreJson({ error: error.message }, { status: 500 });
     if (!data) {
@@ -81,21 +79,19 @@ export async function PUT(req: NextRequest, ctx: RouteCtx) {
       );
     }
 
+    const desiredSort =
+      parsed.data.sort_order !== undefined ? parsed.data.sort_order : undefined;
+
     const patch: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(parsed.data)) {
-      if (v !== undefined) patch[k] = v;
+      if (v !== undefined && k !== 'sort_order' && k !== 'is_published') patch[k] = v;
     }
-    // 有记录即前台可见
     patch.is_published = true;
-    if (Object.keys(patch).length === 0) {
-      return noStoreJson({ error: '无更新字段' }, { status: 400 });
-    }
 
     const supabase = getSupabaseAdmin();
     const { data: existing } = await supabase.from('news').select('id').eq('id', id).maybeSingle();
 
     if (!existing) {
-      // 从默认文案 upsert，便于首次编辑硬编码新闻
       const fallback = defaultNewsArticles().find((a) => a.id === id);
       const insert = {
         id,
@@ -108,30 +104,24 @@ export async function PUT(req: NextRequest, ctx: RouteCtx) {
           parsed.data.published_at !== undefined
             ? parsed.data.published_at
             : fallback?.published_at ?? null,
-        sort_order: parsed.data.sort_order ?? fallback?.sort_order ?? 0,
+        sort_order: 999999,
         is_published: true,
       };
-      const { data, error } = await supabase
-        .from('news')
-        .insert(insert)
-        .select(
-          'id, title_zh, title_en, content_zh, content_en, image_url, published_at, sort_order, is_published, updated_at'
-        )
-        .single();
+      const { error } = await supabase.from('news').insert(insert);
       if (error) return noStoreJson({ error: error.message }, { status: 500 });
-      return noStoreJson({ ok: true, item: mapNewsRow(data as Record<string, unknown>) });
+      await placeNewNewsAt(supabase, id, desiredSort ?? null);
+    } else {
+      if (Object.keys(patch).length > 0) {
+        const { error } = await supabase.from('news').update(patch).eq('id', id);
+        if (error) return noStoreJson({ error: error.message }, { status: 500 });
+      }
+      if (desiredSort !== undefined) {
+        await placeNewsAt(supabase, id, desiredSort);
+      }
     }
 
-    const { data, error } = await supabase
-      .from('news')
-      .update(patch)
-      .eq('id', id)
-      .select(
-        'id, title_zh, title_en, content_zh, content_en, image_url, published_at, sort_order, is_published, updated_at'
-      )
-      .maybeSingle();
-
-    if (error) return noStoreJson({ error: error.message }, { status: 500 });
+    const { data, error: readErr } = await supabase.from('news').select(NEWS_COLS).eq('id', id).maybeSingle();
+    if (readErr) return noStoreJson({ error: readErr.message }, { status: 500 });
     if (!data) return noStoreJson({ error: '不存在' }, { status: 404 });
     return noStoreJson({ ok: true, item: mapNewsRow(data as Record<string, unknown>) });
   } catch (e: any) {
@@ -153,6 +143,8 @@ export async function DELETE(_req: NextRequest, ctx: RouteCtx) {
     const supabase = getSupabaseAdmin();
     const { error } = await supabase.from('news').delete().eq('id', id);
     if (error) return noStoreJson({ error: error.message }, { status: 500 });
+
+    await normalizeNewsSortOrder(supabase);
     return noStoreJson({ ok: true, id });
   } catch (e: any) {
     const status = e?.status === 401 ? 401 : 500;

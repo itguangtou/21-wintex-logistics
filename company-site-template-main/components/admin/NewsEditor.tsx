@@ -149,12 +149,13 @@ export default function NewsEditor() {
             />
           </label>
           <label className="grid gap-1">
-            <span className="text-sm font-medium text-gray-700">排序（越小越靠前，建议 1、2、3…）</span>
+            <span className="text-sm font-medium text-gray-700">排序位置（1 最前；保存后自动重排为连续 1…n）</span>
             <input
               type="number"
+              min={1}
               className="border rounded-lg px-3 py-2 text-sm outline-none focus:border-[#0E2745] focus:ring-2 focus:ring-[#0E2745]/15"
               value={draft.sort_order}
-              onChange={(e) => setDraft((d) => ({ ...d, sort_order: Number(e.target.value) || 0 }))}
+              onChange={(e) => setDraft((d) => ({ ...d, sort_order: Number(e.target.value) || 1 }))}
             />
           </label>
         </div>
