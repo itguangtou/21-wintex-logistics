@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import BilingualField from './BilingualField';
 import { useAdminChrome } from './AdminChromeContext';
 import { useAdminAuth } from './AdminAuthContext';
+import { useAdminMessage } from './AdminMessage';
 import {
   DEFAULT_ABOUT_CONTENT,
   type AboutPageContent,
@@ -63,20 +64,18 @@ function AccordionItem({
 export default function AboutPageEditor() {
   const { setSubtitle } = useAdminChrome();
   const { logout } = useAdminAuth();
+  const message = useAdminMessage();
   const [data, setData] = useState<AboutPageContent | null>(null);
   const [openIntro, setOpenIntro] = useState<Record<number, boolean>>({});
   const [openNetwork, setOpenNetwork] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setSubtitle('编辑品牌引言与网络图文案，发布后网站会更新');
     let mounted = true;
     (async () => {
       setLoading(true);
-      setError(null);
       try {
         const res = await fetch('/api/pages/about', { credentials: 'include', cache: 'no-store' });
         const j = await res.json().catch(() => ({}));
@@ -86,7 +85,7 @@ export default function AboutPageEditor() {
       } catch (e: unknown) {
         if (!mounted) return;
         setData(cloneDefault());
-        setError(e instanceof Error ? e.message : '加载失败，已使用默认文案');
+        message.warning(e instanceof Error ? e.message : '加载失败，已使用默认文案');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -95,13 +94,11 @@ export default function AboutPageEditor() {
       mounted = false;
       setSubtitle(null);
     };
-  }, [setSubtitle]);
+  }, [setSubtitle, message]);
 
   const save = async (mode: 'draft' | 'publish') => {
     if (!data) return;
     setSaving(true);
-    setMessage(null);
-    setError(null);
     try {
       const res = await fetch('/api/pages/about', {
         method: 'PUT',
@@ -115,9 +112,9 @@ export default function AboutPageEditor() {
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
       if (!res.ok) throw new Error(j?.error || '保存失败，请稍后重试');
-      setMessage(mode === 'draft' ? '草稿已保存' : '已发布，网站已更新');
+      message.success(mode === 'draft' ? '草稿已保存' : '已发布，网站已更新');
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '保存失败');
+      message.error(e instanceof Error ? e.message : '保存失败');
     } finally {
       setSaving(false);
     }
@@ -181,8 +178,6 @@ export default function AboutPageEditor() {
         >
           {saving ? '发布中…' : '保存并发布'}
         </button>
-        {message && <span className="text-sm text-emerald-700">{message}</span>}
-        {error && <span className="text-sm text-red-600">{error}</span>}
       </div>
 
       <section>

@@ -5,6 +5,7 @@ import BilingualField from './BilingualField';
 import ImageReplaceField from './ImageReplaceField';
 import { useAdminChrome } from './AdminChromeContext';
 import { useAdminAuth } from './AdminAuthContext';
+import { useAdminMessage } from './AdminMessage';
 import {
   DEFAULT_MISSION_CONTENT,
   type LocaleText,
@@ -90,6 +91,7 @@ function rowToDraft(row: TimelineItemRow): TimelineDraft {
 export default function MissionPageEditor() {
   const { setSubtitle } = useAdminChrome();
   const { logout } = useAdminAuth();
+  const message = useAdminMessage();
   const [data, setData] = useState<MissionPageContent | null>(null);
   const [timeline, setTimeline] = useState<TimelineItemRow[]>([]);
   const [timelineDrafts, setTimelineDrafts] = useState<Record<number, TimelineDraft>>({});
@@ -100,8 +102,6 @@ export default function MissionPageEditor() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [timelineBusy, setTimelineBusy] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   const loadTimeline = useCallback(async () => {
     const res = await fetch('/api/timeline', { credentials: 'include', cache: 'no-store' });
@@ -119,7 +119,6 @@ export default function MissionPageEditor() {
     let mounted = true;
     (async () => {
       setLoading(true);
-      setError(null);
       try {
         const [pageRes] = await Promise.all([
           fetch('/api/pages/mission', { credentials: 'include', cache: 'no-store' }),
@@ -134,7 +133,7 @@ export default function MissionPageEditor() {
       } catch (e: unknown) {
         if (!mounted) return;
         setData(cloneDefault());
-        setError(e instanceof Error ? e.message : '加载失败，已使用默认文案');
+        message.warning(e instanceof Error ? e.message : '加载失败，已使用默认文案');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -143,13 +142,11 @@ export default function MissionPageEditor() {
       mounted = false;
       setSubtitle(null);
     };
-  }, [setSubtitle, loadTimeline]);
+  }, [setSubtitle, loadTimeline, message]);
 
   const save = async (mode: 'draft' | 'publish') => {
     if (!data) return;
     setSaving(true);
-    setMessage(null);
-    setError(null);
     try {
       const res = await fetch('/api/pages/mission', {
         method: 'PUT',
@@ -163,9 +160,9 @@ export default function MissionPageEditor() {
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
       if (!res.ok) throw new Error(j?.error || '保存失败，请稍后重试');
-      setMessage(mode === 'draft' ? '草稿已保存' : '已发布，网站已更新');
+      message.success(mode === 'draft' ? '草稿已保存' : '已发布，网站已更新');
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '保存失败');
+      message.error(e instanceof Error ? e.message : '保存失败');
     } finally {
       setSaving(false);
     }
@@ -218,12 +215,10 @@ export default function MissionPageEditor() {
     const draft = timelineDrafts[id];
     if (!draft) return;
     if (!draft.year.trim()) {
-      setError('年份不能为空');
+      message.warning('年份不能为空');
       return;
     }
     setTimelineBusy(true);
-    setMessage(null);
-    setError(null);
     try {
       const res = await fetch(`/api/timeline/${id}`, {
         method: 'PUT',
@@ -237,10 +232,10 @@ export default function MissionPageEditor() {
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
       if (!res.ok) throw new Error(j?.error || '保存失败，请稍后重试');
-      setMessage('时间轴条目已保存');
+      message.success('时间轴条目已保存');
       await loadTimeline();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '时间轴保存失败');
+      message.error(e instanceof Error ? e.message : '时间轴保存失败');
     } finally {
       setTimelineBusy(false);
     }
@@ -248,8 +243,6 @@ export default function MissionPageEditor() {
 
   const addTimelineItem = async () => {
     setTimelineBusy(true);
-    setMessage(null);
-    setError(null);
     try {
       const maxSort = timeline.reduce((m, r) => Math.max(m, r.sort_order ?? 0), 0);
       const res = await fetch('/api/timeline', {
@@ -272,13 +265,13 @@ export default function MissionPageEditor() {
       }
       if (!res.ok) throw new Error(j?.error || '保存失败，请稍后重试');
       const newId = Number(j?.item?.id);
-      setMessage('已新增时间轴条目');
+      message.success('已新增时间轴条目');
       await loadTimeline();
       if (Number.isFinite(newId) && newId > 0) {
         setOpenTimeline((prev) => ({ ...prev, [newId]: true }));
       }
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '新增失败');
+      message.error(e instanceof Error ? e.message : '新增失败');
     } finally {
       setTimelineBusy(false);
     }
@@ -296,8 +289,6 @@ export default function MissionPageEditor() {
     ordered[swapWith] = tmp;
 
     setTimelineBusy(true);
-    setMessage(null);
-    setError(null);
     try {
       const res = await fetch('/api/timeline/reorder', {
         method: 'PUT',
@@ -311,10 +302,10 @@ export default function MissionPageEditor() {
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
       if (!res.ok) throw new Error(j?.error || '保存失败，请稍后重试');
-      setMessage('顺序已更新');
+      message.success('顺序已更新');
       await loadTimeline();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '调整顺序失败');
+      message.error(e instanceof Error ? e.message : '调整顺序失败');
     } finally {
       setTimelineBusy(false);
     }
@@ -322,15 +313,13 @@ export default function MissionPageEditor() {
 
   const deleteTimelineItem = async (row: TimelineItemRow) => {
     if (row.id <= 0) {
-      setError('示例数据不可删除');
+      message.warning('示例数据不可删除');
       return;
     }
     if (!window.confirm(`确定删除「${row.year} · ${row.project_name_zh || row.project_name_en}」？`)) {
       return;
     }
     setTimelineBusy(true);
-    setMessage(null);
-    setError(null);
     try {
       const res = await fetch(`/api/timeline/${row.id}`, {
         method: 'DELETE',
@@ -342,10 +331,10 @@ export default function MissionPageEditor() {
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
       if (!res.ok) throw new Error(j?.error || '保存失败，请稍后重试');
-      setMessage('已删除时间轴条目');
+      message.success('已删除时间轴条目');
       await loadTimeline();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '删除失败');
+      message.error(e instanceof Error ? e.message : '删除失败');
     } finally {
       setTimelineBusy(false);
     }
@@ -375,8 +364,6 @@ export default function MissionPageEditor() {
           {saving ? '发布中…' : '保存并发布'}
         </button>
         <span className="text-xs text-gray-400">时间轴条目单独保存，立即生效</span>
-        {message && <span className="text-sm text-emerald-700">{message}</span>}
-        {error && <span className="text-sm text-red-600">{error}</span>}
       </div>
 
       {/* 1. 页头 */}

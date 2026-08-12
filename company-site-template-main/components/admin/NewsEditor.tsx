@@ -6,6 +6,7 @@ import BilingualField from './BilingualField';
 import ImageReplaceField from './ImageReplaceField';
 import { useAdminChrome } from './AdminChromeContext';
 import { useAdminAuth } from './AdminAuthContext';
+import { useAdminMessage } from './AdminMessage';
 import type { NewsArticle } from '@/lib/newsContent';
 
 const LOCAL_DRAFT_KEY = 'newsLocalDraft';
@@ -89,6 +90,7 @@ export default function NewsEditor() {
   const router = useRouter();
   const { setSubtitle } = useAdminChrome();
   const { logout } = useAdminAuth();
+  const message = useAdminMessage();
   const id = params?.id || '';
   const isNew = id === 'new';
 
@@ -96,8 +98,6 @@ export default function NewsEditor() {
   const [sortMax, setSortMax] = useState(1);
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const draftRef = useRef(draft);
   draftRef.current = draft;
 
@@ -106,7 +106,6 @@ export default function NewsEditor() {
     let mounted = true;
     (async () => {
       setLoading(true);
-      setError(null);
       try {
         if (isNew) {
           // 新建才需要列表计数，避免编辑页多打一次 ?all=1
@@ -156,7 +155,7 @@ export default function NewsEditor() {
         }
       } catch (e: unknown) {
         if (!mounted) return;
-        setError(e instanceof Error ? e.message : '加载失败');
+        message.error(e instanceof Error ? e.message : '加载失败');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -165,7 +164,7 @@ export default function NewsEditor() {
       mounted = false;
       setSubtitle(null);
     };
-  }, [id, isNew, setSubtitle, logout]);
+  }, [id, isNew, setSubtitle, logout, message]);
 
   // 新建：内容变更时同步到本地，返回列表也不丢
   useEffect(() => {
@@ -176,15 +175,13 @@ export default function NewsEditor() {
   const goBack = useCallback(() => {
     if (isNew) {
       writeLocalDraft(draftRef.current);
-      setMessage('已保存到本地草稿（尚未发布到网站）');
+      message.info('已保存到本地草稿（尚未发布到网站）');
     }
     router.push('/admin/news');
-  }, [isNew, router]);
+  }, [isNew, router, message]);
 
   const publish = async () => {
     setPublishing(true);
-    setMessage(null);
-    setError(null);
     try {
       const sort_order = clampSort(draft.sort_order, sortMax);
       const body = {
@@ -210,8 +207,8 @@ export default function NewsEditor() {
         const newId = j?.item?.id;
         if (!newId) throw new Error('发布失败，请稍后重试');
         clearLocalDraft();
-        setMessage('已发布到网站');
-        router.replace(`/admin/news/${newId}`);
+        message.success('已发布到网站');
+        router.push('/admin/news');
         return;
       }
 
@@ -232,9 +229,10 @@ export default function NewsEditor() {
         next.sort_order = clampSort(next.sort_order, sortMax);
         setDraft(next);
       }
-      setMessage('已发布，网站已更新');
+      message.success('已发布，网站已更新');
+      router.push('/admin/news');
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '发布失败');
+      message.error(e instanceof Error ? e.message : '发布失败');
     } finally {
       setPublishing(false);
     }
@@ -267,8 +265,6 @@ export default function NewsEditor() {
         {isNew && (
           <span className="text-xs text-gray-500">未点发布前只保存在本地草稿，不会出现在列表和网站上</span>
         )}
-        {message && <span className="text-sm text-emerald-700">{message}</span>}
-        {error && <span className="text-sm text-red-600">{error}</span>}
       </div>
 
       <div className="rounded-xl border border-gray-200 bg-white p-5 md:p-6 space-y-6">

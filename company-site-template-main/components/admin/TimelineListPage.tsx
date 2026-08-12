@@ -6,6 +6,7 @@ import DataTable, { type DataTableColumn } from './DataTable';
 import SearchBar from './SearchBar';
 import { useAdminChrome } from './AdminChromeContext';
 import { useAdminAuth } from './AdminAuthContext';
+import { useAdminMessage } from './AdminMessage';
 import type { TimelineItemRow } from '@/lib/missionPageContent';
 
 type Draft = {
@@ -37,30 +38,28 @@ function formatUpdatedAt(iso?: string) {
 export default function TimelineListPage() {
   const { setSubtitle } = useAdminChrome();
   const { logout } = useAdminAuth();
+  const message = useAdminMessage();
   const [items, setItems] = useState<TimelineItemRow[]>([]);
   const [keyword, setKeyword] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | 'new' | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft());
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
       const res = await fetch('/api/timeline', { credentials: 'include', cache: 'no-store' });
       const j = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(j?.error || '操作失败，请稍后重试');
       setItems(Array.isArray(j.items) ? j.items : []);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '加载失败');
+      message.error(e instanceof Error ? e.message : '加载失败');
       setItems([]);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [message]);
 
   useEffect(() => {
     setSubtitle('增删改时间轴条目；同年多条在网站上合并展示');
@@ -83,8 +82,6 @@ export default function TimelineListPage() {
     const maxSort = items.reduce((m, r) => Math.max(m, r.sort_order ?? 0), 0);
     setEditingId('new');
     setDraft({ ...emptyDraft(), sort_order: maxSort + 10, year: new Date().getFullYear().toString() });
-    setMessage(null);
-    setError(null);
   };
 
   const openEdit = (row: TimelineItemRow) => {
@@ -97,8 +94,6 @@ export default function TimelineListPage() {
       description_en: row.description_en,
       sort_order: row.sort_order ?? 0,
     });
-    setMessage(null);
-    setError(null);
   };
 
   const closeEditor = () => {
@@ -108,12 +103,10 @@ export default function TimelineListPage() {
 
   const save = async () => {
     if (!draft.year.trim()) {
-      setError('年份不能为空');
+      message.warning('年份不能为空');
       return;
     }
     setSaving(true);
-    setError(null);
-    setMessage(null);
     try {
       const isNew = editingId === 'new';
       const url = isNew ? '/api/timeline' : `/api/timeline/${editingId}`;
@@ -129,11 +122,11 @@ export default function TimelineListPage() {
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
       if (!res.ok) throw new Error(j?.error || '操作失败，请稍后重试');
-      setMessage(isNew ? '已新建' : '已保存');
+      message.success(isNew ? '已新建' : '已保存');
       closeEditor();
       await load();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '保存失败');
+      message.error(e instanceof Error ? e.message : '保存失败');
     } finally {
       setSaving(false);
     }
@@ -141,15 +134,13 @@ export default function TimelineListPage() {
 
   const remove = async (row: TimelineItemRow) => {
     if (row.id <= 0) {
-      setError('示例数据不可删除，请先保存为正式条目后再操作');
+      message.warning('示例数据不可删除，请先保存为正式条目后再操作');
       return;
     }
     if (!window.confirm(`确定删除「${row.year} · ${row.project_name_zh || row.project_name_en}」？`)) {
       return;
     }
     setSaving(true);
-    setError(null);
-    setMessage(null);
     try {
       const res = await fetch(`/api/timeline/${row.id}`, {
         method: 'DELETE',
@@ -161,11 +152,11 @@ export default function TimelineListPage() {
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
       if (!res.ok) throw new Error(j?.error || '操作失败，请稍后重试');
-      setMessage('已删除');
+      message.success('已删除');
       if (editingId === row.id) closeEditor();
       await load();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '删除失败');
+      message.error(e instanceof Error ? e.message : '删除失败');
     } finally {
       setSaving(false);
     }
@@ -241,13 +232,6 @@ export default function TimelineListPage() {
         placeholder="搜索年份或项目名…"
         showStatus={false}
       />
-
-      {(message || error) && (
-        <div className="text-sm">
-          {message && <span className="text-emerald-700">{message}</span>}
-          {error && <span className="text-red-600">{error}</span>}
-        </div>
-      )}
 
       {editingId != null && (
         <div className="rounded-xl border border-gray-200 bg-white p-5 space-y-4 max-w-4xl">

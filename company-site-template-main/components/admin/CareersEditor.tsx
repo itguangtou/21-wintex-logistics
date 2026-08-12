@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAdminAuth } from './AdminAuthContext';
 import { useAdminChrome } from './AdminChromeContext';
+import { useAdminMessage } from './AdminMessage';
 
 type Job = {
   id: string;
@@ -135,11 +136,10 @@ function plainTextToHtml(text: string): string {
 export default function CareersEditor() {
   const { logout } = useAdminAuth();
   const { setSubtitle } = useAdminChrome();
+  const message = useAdminMessage();
   const [data, setData] = useState<CareersData | null>(null);
   const [openJobs, setOpenJobs] = useState<Record<string, boolean>>({});
   const [openContact, setOpenContact] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -150,7 +150,6 @@ export default function CareersEditor() {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      setError(null);
       try {
         // 始终以服务端数据为准，不用 localStorage 草稿覆盖（避免已删除岗位被草稿复活）
         try {
@@ -166,13 +165,13 @@ export default function CareersEditor() {
         setData(json);
       } catch {
         if (!mounted) return;
-        setError('无法加载招聘数据，请刷新重试');
+        message.error('无法加载招聘数据，请刷新重试');
       }
     })();
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [message]);
 
   const patchJob = (
     id: string,
@@ -212,7 +211,7 @@ export default function CareersEditor() {
       delete next[id];
       return next;
     });
-    setMessage('已从编辑列表移除该岗位（需发布后才会在网站生效）');
+    message.info('已从编辑列表移除该岗位（需发布后才会在网站生效）');
   };
 
   const addNewJob = () => {
@@ -236,8 +235,6 @@ export default function CareersEditor() {
   const publish = async () => {
     if (!data) return;
     setSaving(true);
-    setMessage(null);
-    setError(null);
     try {
       const dataToPublish = structuredClone(data);
       dataToPublish.jobs.forEach((job) => {
@@ -296,10 +293,10 @@ export default function CareersEditor() {
         /* ignore */
       }
 
-      setMessage('已发布，招聘页已更新');
+      message.success('已发布，招聘页已更新');
       setData(dataToPublish);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '发布失败');
+      message.error(e instanceof Error ? e.message : '发布失败');
     } finally {
       setSaving(false);
     }
@@ -308,7 +305,7 @@ export default function CareersEditor() {
   if (!data) {
     return (
       <div className="p-8">
-        {error ? <p className="text-red-600 text-sm">{error}</p> : <p className="text-gray-500 text-sm">加载招聘数据中…</p>}
+        <p className="text-gray-500 text-sm">加载招聘数据中…</p>
       </div>
     );
   }
@@ -324,8 +321,6 @@ export default function CareersEditor() {
         >
           {saving ? '发布中…' : '发布到网站'}
         </button>
-        {message && <span className="text-sm text-emerald-700">{message}</span>}
-        {error && <span className="text-sm text-red-600">{error}</span>}
       </div>
 
       <section>

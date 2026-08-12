@@ -3,6 +3,7 @@
 import { useRef, useState } from 'react';
 import { createClient } from '@supabase/supabase-js';
 import { useAdminAuth } from './AdminAuthContext';
+import { useAdminMessage } from './AdminMessage';
 import { compressImageForUpload } from '@/lib/compressImageForUpload';
 
 type ImageReplaceFieldProps = {
@@ -30,13 +31,12 @@ export default function ImageReplaceField({
 }: ImageReplaceFieldProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const { logout } = useAdminAuth();
+  const message = useAdminMessage();
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const onPick = async (file: File | undefined) => {
     if (!file) return;
     setUploading(true);
-    setError(null);
     try {
       const compressed = await compressImageForUpload(file);
 
@@ -81,8 +81,9 @@ export default function ImageReplaceField({
       if (!finRes.ok) throw new Error(fin?.error || '上传失败，请稍后重试');
       if (!fin?.url) throw new Error('上传失败，请稍后重试');
       onChange(String(fin.url));
+      message.success('图片上传成功');
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '上传失败，请稍后重试');
+      message.error(e instanceof Error ? e.message : '上传失败，请稍后重试');
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = '';
@@ -122,7 +123,6 @@ export default function ImageReplaceField({
           <p className="text-xs text-gray-500">
             支持 JPG / PNG 等常见格式，单张建议不超过 15MB；重新上传会替换当前图片。
           </p>
-          {error && <span className="text-sm text-red-600">{error}</span>}
         </div>
       </div>
     </div>

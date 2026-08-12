@@ -6,6 +6,7 @@ import SearchBar from './SearchBar';
 import DataTable, { type DataTableColumn } from './DataTable';
 import { useAdminChrome } from './AdminChromeContext';
 import { useAdminAuth } from './AdminAuthContext';
+import { useAdminMessage } from './AdminMessage';
 import type { NewsArticle } from '@/lib/newsContent';
 
 function formatUpdatedAt(iso?: string) {
@@ -20,15 +21,14 @@ export default function NewsListPage() {
   const router = useRouter();
   const { setSubtitle } = useAdminChrome();
   const { logout } = useAdminAuth();
+  const message = useAdminMessage();
   const [keyword, setKeyword] = useState('');
   const [rows, setRows] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
       const res = await fetch('/api/news?all=1', { credentials: 'include', cache: 'no-store' });
       const j = await res.json().catch(() => ({}));
@@ -39,12 +39,12 @@ export default function NewsListPage() {
       if (!res.ok) throw new Error(j?.error || '操作失败，请稍后重试');
       setRows(Array.isArray(j.items) ? j.items : []);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '加载失败');
+      message.error(e instanceof Error ? e.message : '加载失败');
       setRows([]);
     } finally {
       setLoading(false);
     }
-  }, [logout]);
+  }, [logout, message]);
 
   const [hasLocalDraft, setHasLocalDraft] = useState(false);
 
@@ -77,6 +77,7 @@ export default function NewsListPage() {
     }).catch(() => {
       /* ignore storage cleanup errors */
     });
+    message.info('已丢弃本地草稿');
   };
 
   const filtered = useMemo(() => {
@@ -97,7 +98,6 @@ export default function NewsListPage() {
   const handleDelete = async (row: NewsArticle) => {
     if (!window.confirm(`确定删除「${row.title_zh || row.title_en || row.id}」？删除后网站将不再展示。`)) return;
     setBusy(true);
-    setError(null);
     try {
       const res = await fetch(`/api/news/${row.id}`, {
         method: 'DELETE',
@@ -110,8 +110,9 @@ export default function NewsListPage() {
       }
       if (!res.ok) throw new Error(j?.error || '操作失败，请稍后重试');
       await load();
+      message.success('已删除');
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '删除失败');
+      message.error(e instanceof Error ? e.message : '删除失败');
     } finally {
       setBusy(false);
     }
@@ -121,7 +122,6 @@ export default function NewsListPage() {
     const target = row.sort_order + (direction === 'up' ? -1 : 1);
     if (target < 1 || target > rows.length) return;
     setBusy(true);
-    setError(null);
     try {
       const res = await fetch(`/api/news/${row.id}`, {
         method: 'PUT',
@@ -136,8 +136,9 @@ export default function NewsListPage() {
       }
       if (!res.ok) throw new Error(j?.error || '操作失败，请稍后重试');
       await load();
+      message.success('顺序已更新');
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '调整顺序失败');
+      message.error(e instanceof Error ? e.message : '调整顺序失败');
     } finally {
       setBusy(false);
     }
@@ -247,7 +248,6 @@ export default function NewsListPage() {
           </button>
         </div>
       )}
-      {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
       {loading ? (
         <div className="text-sm text-gray-500 py-8">加载中…</div>
       ) : (

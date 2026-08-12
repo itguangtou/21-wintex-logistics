@@ -5,6 +5,7 @@ import BilingualField from './BilingualField';
 import ImageReplaceField from './ImageReplaceField';
 import { useAdminChrome } from './AdminChromeContext';
 import { useAdminAuth } from './AdminAuthContext';
+import { useAdminMessage } from './AdminMessage';
 import {
   DEFAULT_EQUIPMENT_CONTENT,
   type EquipmentPageContent,
@@ -64,6 +65,7 @@ function AccordionItem({
 export default function EquipmentPageEditor() {
   const { setSubtitle } = useAdminChrome();
   const { logout } = useAdminAuth();
+  const message = useAdminMessage();
   const [data, setData] = useState<EquipmentPageContent | null>(null);
   const [openHeader, setOpenHeader] = useState(false);
   const [openGallery, setOpenGallery] = useState<Record<number, boolean>>({});
@@ -73,15 +75,12 @@ export default function EquipmentPageEditor() {
   const [openM2R2, setOpenM2R2] = useState<Record<number, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setSubtitle('编辑装备图文与说明（固定条目，仅编辑不增删），发布后网站会更新');
     let mounted = true;
     (async () => {
       setLoading(true);
-      setError(null);
       try {
         const res = await fetch('/api/pages/equipment', {
           credentials: 'include',
@@ -94,7 +93,7 @@ export default function EquipmentPageEditor() {
       } catch (e: unknown) {
         if (!mounted) return;
         setData(cloneDefault());
-        setError(e instanceof Error ? e.message : '加载失败，已使用默认文案');
+        message.warning(e instanceof Error ? e.message : '加载失败，已使用默认文案');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -103,13 +102,11 @@ export default function EquipmentPageEditor() {
       mounted = false;
       setSubtitle(null);
     };
-  }, [setSubtitle]);
+  }, [setSubtitle, message]);
 
   const save = async (mode: 'draft' | 'publish') => {
     if (!data) return;
     setSaving(true);
-    setMessage(null);
-    setError(null);
     try {
       const res = await fetch('/api/pages/equipment', {
         method: 'PUT',
@@ -123,9 +120,9 @@ export default function EquipmentPageEditor() {
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
       if (!res.ok) throw new Error(j?.error || '保存失败，请稍后重试');
-      setMessage(mode === 'draft' ? '草稿已保存' : '已发布，网站已更新');
+      message.success(mode === 'draft' ? '草稿已保存' : '已发布，网站已更新');
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '保存失败');
+      message.error(e instanceof Error ? e.message : '保存失败');
     } finally {
       setSaving(false);
     }
@@ -197,8 +194,6 @@ export default function EquipmentPageEditor() {
         >
           {saving ? '发布中…' : '保存并发布'}
         </button>
-        {message && <span className="text-sm text-emerald-700">{message}</span>}
-        {error && <span className="text-sm text-red-600">{error}</span>}
       </div>
 
       <section>

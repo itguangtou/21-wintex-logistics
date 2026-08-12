@@ -5,6 +5,7 @@ import BilingualField from './BilingualField';
 import ImageReplaceField from './ImageReplaceField';
 import { useAdminChrome } from './AdminChromeContext';
 import { useAdminAuth } from './AdminAuthContext';
+import { useAdminMessage } from './AdminMessage';
 import {
   DEFAULT_HOME_CONTENT,
   type HomePageContent,
@@ -67,6 +68,7 @@ type EquipOption = { index: number; image: string; nameZh: string; nameEn: strin
 export default function HomePageEditor() {
   const { setSubtitle } = useAdminChrome();
   const { logout } = useAdminAuth();
+  const message = useAdminMessage();
   const [data, setData] = useState<HomePageContent | null>(null);
   const [newsOptions, setNewsOptions] = useState<NewsOption[]>([]);
   const [equipOptions, setEquipOptions] = useState<EquipOption[]>([]);
@@ -76,15 +78,12 @@ export default function HomePageEditor() {
   const [openEquip, setOpenEquip] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     setSubtitle('首页分区编辑：关于我们 / 新闻（选 4） / 实力见证 / 装备（选 4）');
     let mounted = true;
     (async () => {
       setLoading(true);
-      setError(null);
       try {
         const [homeRes, newsRes, equipRes] = await Promise.all([
           fetch('/api/pages/home', { credentials: 'include', cache: 'no-store' }),
@@ -137,7 +136,7 @@ export default function HomePageEditor() {
       } catch (e: unknown) {
         if (!mounted) return;
         setData(cloneDefault());
-        setError(e instanceof Error ? e.message : '加载失败，已使用默认内容');
+        message.warning(e instanceof Error ? e.message : '加载失败，已使用默认内容');
       } finally {
         if (mounted) setLoading(false);
       }
@@ -146,21 +145,19 @@ export default function HomePageEditor() {
       mounted = false;
       setSubtitle(null);
     };
-  }, [setSubtitle]);
+  }, [setSubtitle, message]);
 
   const save = async (mode: 'draft' | 'publish') => {
     if (!data) return;
     if (new Set(data.news.featuredIds).size !== 4) {
-      setError('新闻区必须选择 4 条互不重复的新闻');
+      message.warning('新闻区必须选择 4 条互不重复的新闻');
       return;
     }
     if (new Set(data.equipment.featuredIndices).size !== 4) {
-      setError('装备区必须选择 4 项互不重复的装备');
+      message.warning('装备区必须选择 4 项互不重复的装备');
       return;
     }
     setSaving(true);
-    setMessage(null);
-    setError(null);
     try {
       const res = await fetch('/api/pages/home', {
         method: 'PUT',
@@ -174,9 +171,9 @@ export default function HomePageEditor() {
         throw new Error(j?.error || '登录已过期，请重新登录');
       }
       if (!res.ok) throw new Error(j?.error || '保存失败，请稍后重试');
-      setMessage(mode === 'draft' ? '草稿已保存' : '已发布，网站已更新');
+      message.success(mode === 'draft' ? '草稿已保存' : '已发布，网站已更新');
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : '保存失败');
+      message.error(e instanceof Error ? e.message : '保存失败');
     } finally {
       setSaving(false);
     }
@@ -244,8 +241,6 @@ export default function HomePageEditor() {
         >
           {saving ? '发布中…' : '保存并发布'}
         </button>
-        {message && <span className="text-sm text-emerald-700">{message}</span>}
-        {error && <span className="text-sm text-red-600">{error}</span>}
       </div>
 
       <ul className="rounded-xl border border-gray-200 bg-white overflow-hidden">
