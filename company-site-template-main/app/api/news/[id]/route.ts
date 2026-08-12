@@ -4,7 +4,7 @@ import { getSupabaseAdmin, hasSupabaseConfig } from '@/lib/supabase';
 import { requireAdminSession } from '@/lib/auth';
 import { defaultNewsArticles, mapNewsRow } from '@/lib/newsContent';
 import { normalizeNewsSortOrder, placeNewNewsAt, placeNewsAt } from '@/lib/newsSort';
-import { promoteNewsDraftCover, removeNewsMediaAssets } from '@/lib/mediaUpload';
+import { promoteNewsDraftCover, removeMediaByPublicUrl, removeNewsMediaAssets } from '@/lib/mediaUpload';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -90,17 +90,27 @@ export async function PUT(req: NextRequest, ctx: RouteCtx) {
     patch.is_published = true;
 
     const supabase = getSupabaseAdmin();
-    const { data: existing } = await supabase.from('news').select('id').eq('id', id).maybeSingle();
+    const { data: existing } = await supabase
+      .from('news')
+      .select('id, image_url')
+      .eq('id', id)
+      .maybeSingle();
 
     if (!existing) {
       const fallback = defaultNewsArticles().find((a) => a.id === id);
+      let image_url = parsed.data.image_url ?? fallback?.image_url ?? '';
+      try {
+        image_url = await promoteNewsDraftCover(image_url, id);
+      } catch (e) {
+        console.error('[news PUT] promote cover failed', e);
+      }
       const insert = {
         id,
         title_zh: parsed.data.title_zh ?? fallback?.title_zh ?? '',
         title_en: parsed.data.title_en ?? fallback?.title_en ?? '',
         content_zh: parsed.data.content_zh ?? fallback?.content_zh ?? '',
         content_en: parsed.data.content_en ?? fallback?.content_en ?? '',
-        image_url: parsed.data.image_url ?? fallback?.image_url ?? '',
+        image_url,
         published_at:
           parsed.data.published_at !== undefined
             ? parsed.data.published_at
@@ -112,12 +122,24 @@ export async function PUT(req: NextRequest, ctx: RouteCtx) {
       if (error) return noStoreJson({ error: error.message }, { status: 500 });
       await placeNewNewsAt(supabase, id, desiredSort ?? null);
     } else {
+      const previousImage = existing.image_url ? String(existing.image_url) : '';
       if (Object.keys(patch).length > 0) {
         const { error } = await supabase.from('news').update(patch).eq('id', id);
         if (error) return noStoreJson({ error: error.message }, { status: 500 });
       }
       if (desiredSort !== undefined) {
         await placeNewsAt(supabase, id, desiredSort);
+      }
+      // 封面 URL 变更时删除旧 media（静态路径忽略）
+      if (parsed.data.image_url !== undefined) {
+        const nextImage = String(parsed.data.image_url || '');
+        if (previousImage && previousImage !== nextImage) {
+          try {
+            await removeMediaByPublicUrl(previousImage);
+          } catch (e) {
+            console.error('[news PUT] old cover cleanup failed', e);
+          }
+        }
       }
     }
 

@@ -16,6 +16,7 @@ import {
   DEFAULT_HOME_CONTENT,
   type HomePageContent,
 } from '@/lib/homePageContent';
+import { removeOrphanedMediaUrls } from '@/lib/mediaUpload';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -342,7 +343,7 @@ export async function PUT(req: NextRequest, ctx: RouteCtx) {
 
     const { data: existing } = await supabase
       .from('pages')
-      .select('slug, content')
+      .select('slug, content, draft_content')
       .eq('slug', slug)
       .maybeSingle();
 
@@ -402,6 +403,16 @@ export async function PUT(req: NextRequest, ctx: RouteCtx) {
       if (error) {
         return NextResponse.json({ error: error.message }, { status: 500 });
       }
+    }
+
+    // 发布后清理：旧 published/draft 中有、新内容已不再引用的 media 文件
+    try {
+      await removeOrphanedMediaUrls(
+        [existing?.content, existing?.draft_content],
+        content
+      );
+    } catch (e) {
+      console.error('[pages PUT] orphan media cleanup failed', e);
     }
 
     return NextResponse.json({

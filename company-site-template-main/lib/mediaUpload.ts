@@ -161,3 +161,74 @@ export function publicUrlForPath(path: string) {
   const { data: pub } = supabase.storage.from(MEDIA_BUCKET).getPublicUrl(path);
   return `${pub.publicUrl}?v=${Date.now()}`;
 }
+
+/** 从任意 JSON 内容中收集 media 桶公开 URL（去 query） */
+export function collectMediaUrlsFromUnknown(value: unknown, out = new Set<string>()): Set<string> {
+  if (value == null) return out;
+  if (typeof value === 'string') {
+    const path = storagePathFromPublicUrl(value);
+    if (path) {
+      try {
+        const u = new URL(value, 'https://placeholder.local');
+        u.search = '';
+        u.hash = '';
+        out.add(u.toString().replace('https://placeholder.local', ''));
+        // 也保留原始 path 便于删除
+        out.add(value.trim());
+      } catch {
+        out.add(value.trim());
+      }
+    }
+    return out;
+  }
+  if (Array.isArray(value)) {
+    for (const item of value) collectMediaUrlsFromUnknown(item, out);
+    return out;
+  }
+  if (typeof value === 'object') {
+    for (const v of Object.values(value as Record<string, unknown>)) {
+      collectMediaUrlsFromUnknown(v, out);
+    }
+  }
+  return out;
+}
+
+function mediaPathKey(url: string): string | null {
+  return storagePathFromPublicUrl(url);
+}
+
+/**
+ * 删除「旧内容有、新内容没有」的 media 对象。
+ * 静态 /images/... 路径会被忽略。
+ */
+export async function removeOrphanedMediaUrls(
+  previousContents: unknown[],
+  nextContent: unknown
+): Promise<number> {
+  const oldUrls = new Set<string>();
+  for (const prev of previousContents) {
+    collectMediaUrlsFromUnknown(prev, oldUrls);
+  }
+  const newUrls = collectMediaUrlsFromUnknown(nextContent);
+  const keepPaths = new Set<string>();
+  for (const u of newUrls) {
+    const p = mediaPathKey(u);
+    if (p) keepPaths.add(p);
+  }
+
+  const toDeletePaths = new Set<string>();
+  for (const u of oldUrls) {
+    const p = mediaPathKey(u);
+    if (p && !keepPaths.has(p)) toDeletePaths.add(p);
+  }
+
+  if (!toDeletePaths.size) return 0;
+  const supabase = getSupabaseAdmin();
+  const paths = [...toDeletePaths];
+  const { error } = await supabase.storage.from(MEDIA_BUCKET).remove(paths);
+  if (error) {
+    console.error('[media] orphan remove failed', error.message, paths);
+    return 0;
+  }
+  return paths.length;
+}
