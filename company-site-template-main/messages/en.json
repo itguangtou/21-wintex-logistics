@@ -54,6 +54,10 @@
     "contactAddress":"U1203, The Trade & Financial Tower ,7th Ave cor 32nd St.,BGC,Taguig City, Philippines",
     "copyright":"© Wintexs Logistics Corp. All Rights Reserved."
   },
+  "news":{
+    "prevPage":"Previous",
+    "nextPage":"Next"
+  },
   "careers":{
     "title":"Join Us","intro":"We focus on renewable and heavy engineering logistics in the Philippines.",
     "openings":[

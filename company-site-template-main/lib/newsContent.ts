@@ -93,6 +93,40 @@ export function buildNewsPreview(article: NewsArticle, locale: 'zh' | 'en'): New
   };
 }
 
+export const NEWS_PAGE_SIZE = 6;
+
+export type NewsPageResult = {
+  items: NewsArticle[];
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
+};
+
+export function parseNewsPageParam(raw?: string): number {
+  const n = parseInt(raw || '1', 10);
+  return Number.isFinite(n) && n > 0 ? n : 1;
+}
+
+function paginateArticles(
+  articles: NewsArticle[],
+  page: number,
+  pageSize: number
+): NewsPageResult {
+  const total = articles.length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const start = (safePage - 1) * pageSize;
+
+  return {
+    items: articles.slice(start, start + pageSize),
+    page: safePage,
+    pageSize,
+    total,
+    totalPages,
+  };
+}
+
 export async function loadPublishedNews(): Promise<NewsArticle[]> {
   noStore();
   if (!hasSupabaseConfig()) return defaultNewsArticles();
@@ -116,6 +150,63 @@ export async function loadPublishedNews(): Promise<NewsArticle[]> {
   } catch (e) {
     console.error('[news] list failed', e);
     return defaultNewsArticles();
+  }
+}
+
+export async function loadPublishedNewsPage(
+  page: number,
+  pageSize = NEWS_PAGE_SIZE
+): Promise<NewsPageResult> {
+  noStore();
+  const safePage = parseNewsPageParam(String(page));
+
+  if (!hasSupabaseConfig()) {
+    return paginateArticles(defaultNewsArticles(), safePage, pageSize);
+  }
+
+  try {
+    const supabase = getSupabaseAdmin();
+    const from = (safePage - 1) * pageSize;
+    const to = from + pageSize - 1;
+
+    const { data, error, count } = await supabase
+      .from('news')
+      .select(
+        'id, title_zh, title_en, content_zh, content_en, image_url, published_at, sort_order, is_published, updated_at',
+        { count: 'exact' }
+      )
+      .eq('is_published', true)
+      .order('sort_order', { ascending: true })
+      .order('published_at', { ascending: false })
+      .range(from, to);
+
+    if (error) {
+      console.error('[news] page:', error.message);
+      return paginateArticles(defaultNewsArticles(), safePage, pageSize);
+    }
+
+    const total = count ?? 0;
+    if (total === 0) {
+      return paginateArticles(defaultNewsArticles(), safePage, pageSize);
+    }
+
+    const totalPages = Math.max(1, Math.ceil(total / pageSize));
+    const clampedPage = Math.min(safePage, totalPages);
+
+    if (clampedPage !== safePage) {
+      return loadPublishedNewsPage(clampedPage, pageSize);
+    }
+
+    return {
+      items: (data ?? []).map((row) => mapNewsRow(row as Record<string, unknown>)),
+      page: clampedPage,
+      pageSize,
+      total,
+      totalPages,
+    };
+  } catch (e) {
+    console.error('[news] page failed', e);
+    return paginateArticles(defaultNewsArticles(), safePage, pageSize);
   }
 }
 

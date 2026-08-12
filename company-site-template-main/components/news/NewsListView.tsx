@@ -1,14 +1,27 @@
 import Link from 'next/link';
 import type { NewsPreview } from '@/lib/newsContent';
+import NewsPagination from '@/components/news/NewsPagination';
 
 type Props = {
   locale: string;
   title: string;
   items: NewsPreview[];
+  page: number;
+  totalPages: number;
+  prevPageLabel: string;
+  nextPageLabel: string;
 };
 
 /** 纯服务端展示：文案直接进 HTML，无客户端取数 */
-export default function NewsListView({ locale, title, items }: Props) {
+export default function NewsListView({
+  locale,
+  title,
+  items,
+  page,
+  totalPages,
+  prevPageLabel,
+  nextPageLabel,
+}: Props) {
   const lang = locale === 'en' ? 'en' : 'zh';
 
   return (
@@ -62,6 +75,14 @@ export default function NewsListView({ locale, title, items }: Props) {
                 </div>
               ))}
             </div>
+
+            <NewsPagination
+              locale={locale}
+              page={page}
+              totalPages={totalPages}
+              prevLabel={prevPageLabel}
+              nextLabel={nextPageLabel}
+            />
           </div>
         </div>
       </div>
