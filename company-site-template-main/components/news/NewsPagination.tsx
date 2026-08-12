@@ -36,8 +36,6 @@ export default function NewsPagination({
   prevLabel,
   nextLabel,
 }: Props) {
-  if (totalPages <= 1) return null;
-
   const lang = locale === 'en' ? 'en' : 'zh';
   const pages = getVisiblePages(page, totalPages);
   const prevDisabled = page <= 1;
