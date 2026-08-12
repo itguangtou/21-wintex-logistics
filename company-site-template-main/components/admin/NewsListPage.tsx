@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import SearchBar, { type StatusFilter } from './SearchBar';
+import SearchBar from './SearchBar';
 import DataTable, { type DataTableColumn } from './DataTable';
 import { useAdminChrome } from './AdminChromeContext';
 import { useAdminAuth } from './AdminAuthContext';
@@ -16,27 +16,11 @@ function formatUpdatedAt(iso?: string) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function StatusBadge({ published }: { published: boolean }) {
-  if (published) {
-    return (
-      <span className="inline-flex px-2 py-0.5 rounded text-xs bg-emerald-50 text-emerald-700 border border-emerald-100">
-        已发布
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex px-2 py-0.5 rounded text-xs bg-amber-50 text-amber-700 border border-amber-100">
-      草稿
-    </span>
-  );
-}
-
 export default function NewsListPage() {
   const router = useRouter();
   const { setSubtitle } = useAdminChrome();
   const { logout } = useAdminAuth();
   const [keyword, setKeyword] = useState('');
-  const [status, setStatus] = useState<StatusFilter>('all');
   const [rows, setRows] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -63,24 +47,21 @@ export default function NewsListPage() {
   }, [logout]);
 
   useEffect(() => {
-    setSubtitle('新闻列表：新建 / 编辑 / 发布；前台为服务端渲染');
+    setSubtitle('新闻列表：新建 / 编辑 / 删除；删除即从前台消失');
     void load();
     return () => setSubtitle(null);
   }, [setSubtitle, load]);
 
   const filtered = useMemo(() => {
     const q = keyword.trim().toLowerCase();
-    return rows.filter((row) => {
-      if (status === 'published' && !row.is_published) return false;
-      if (status === 'draft' && row.is_published) return false;
-      if (!q) return true;
-      return (
+    if (!q) return rows;
+    return rows.filter(
+      (row) =>
         row.title_zh.toLowerCase().includes(q) ||
         row.title_en.toLowerCase().includes(q) ||
         row.id.toLowerCase().includes(q)
-      );
-    });
-  }, [rows, keyword, status]);
+    );
+  }, [rows, keyword]);
 
   const handleCreate = async () => {
     setBusy(true);
@@ -96,7 +77,7 @@ export default function NewsListPage() {
           content_zh: '',
           content_en: '',
           image_url: '/news4.png',
-          is_published: false,
+          is_published: true,
         }),
       });
       const j = await res.json().catch(() => ({}));
@@ -116,7 +97,7 @@ export default function NewsListPage() {
   };
 
   const handleDelete = async (row: NewsArticle) => {
-    if (!window.confirm(`确定删除「${row.title_zh || row.title_en || row.id}」？`)) return;
+    if (!window.confirm(`确定删除「${row.title_zh || row.title_en || row.id}」？删除后前台立即不可见。`)) return;
     setBusy(true);
     setError(null);
     try {
@@ -150,16 +131,16 @@ export default function NewsListPage() {
       ),
     },
     {
+      key: 'sort',
+      header: '排序',
+      className: 'whitespace-nowrap text-gray-600',
+      render: (row) => row.sort_order,
+    },
+    {
       key: 'updatedAt',
       header: '更新时间',
       className: 'whitespace-nowrap text-gray-600',
       render: (row) => formatUpdatedAt(row.updated_at),
-    },
-    {
-      key: 'status',
-      header: '状态',
-      className: 'whitespace-nowrap',
-      render: (row) => <StatusBadge published={row.is_published} />,
     },
     {
       key: 'actions',
@@ -198,10 +179,9 @@ export default function NewsListPage() {
       <SearchBar
         keyword={keyword}
         onKeywordChange={setKeyword}
-        status={status}
-        onStatusChange={setStatus}
         onCreate={() => void handleCreate()}
         createLabel={busy ? '创建中…' : '新建新闻'}
+        showStatus={false}
       />
       {error && <p className="mb-3 text-sm text-red-600">{error}</p>}
       {loading ? (
@@ -217,7 +197,7 @@ export default function NewsListPage() {
       )}
       <p className="mt-3 text-xs text-gray-500">
         共 {filtered.length} 条
-        {status !== 'all' || keyword ? `（已筛选，全库 ${rows.length}）` : ''}
+        {keyword ? `（已筛选，全库 ${rows.length}）` : ''}
       </p>
     </div>
   );

@@ -16,7 +16,6 @@ type Draft = {
   image_url: string;
   published_at: string;
   sort_order: number;
-  is_published: boolean;
 };
 
 function emptyDraft(): Draft {
@@ -28,7 +27,6 @@ function emptyDraft(): Draft {
     image_url: '',
     published_at: '',
     sort_order: 0,
-    is_published: false,
   };
 }
 
@@ -41,7 +39,6 @@ function fromArticle(a: NewsArticle): Draft {
     image_url: a.image_url,
     published_at: a.published_at || '',
     sort_order: a.sort_order ?? 0,
-    is_published: a.is_published,
   };
 }
 
@@ -83,7 +80,7 @@ export default function NewsEditor() {
     };
   }, [id, setSubtitle]);
 
-  const save = async (publish?: boolean) => {
+  const save = async () => {
     setSaving(true);
     setMessage(null);
     setError(null);
@@ -91,7 +88,7 @@ export default function NewsEditor() {
       const body = {
         ...draft,
         published_at: draft.published_at || null,
-        is_published: publish === undefined ? draft.is_published : publish,
+        is_published: true,
       };
       const res = await fetch(`/api/news/${id}`, {
         method: 'PUT',
@@ -106,7 +103,7 @@ export default function NewsEditor() {
       }
       if (!res.ok) throw new Error(j?.error || `HTTP ${res.status}`);
       if (j?.item) setDraft(fromArticle(j.item));
-      setMessage(body.is_published ? '已保存并发布（前台刷新可见）' : '已保存为草稿');
+      setMessage('已保存（前台刷新可见）');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : '保存失败');
     } finally {
@@ -131,25 +128,17 @@ export default function NewsEditor() {
         <button
           type="button"
           disabled={saving}
-          onClick={() => void save(false)}
-          className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-sm hover:bg-gray-50 disabled:opacity-50"
-        >
-          {saving ? '保存中…' : '保存草稿'}
-        </button>
-        <button
-          type="button"
-          disabled={saving}
-          onClick={() => void save(true)}
+          onClick={() => void save()}
           className="px-5 py-2 rounded-lg bg-[#0E2745] text-white text-sm font-semibold hover:bg-[#163a5f] disabled:opacity-50"
         >
-          {saving ? '发布中…' : '保存并发布'}
+          {saving ? '保存中…' : '保存'}
         </button>
         {message && <span className="text-sm text-emerald-700">{message}</span>}
         {error && <span className="text-sm text-red-600">{error}</span>}
       </div>
 
       <div className="rounded-xl border border-gray-200 bg-white p-5 md:p-6 space-y-6">
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-2 gap-4">
           <label className="grid gap-1">
             <span className="text-sm font-medium text-gray-700">发布日期</span>
             <input
@@ -160,21 +149,13 @@ export default function NewsEditor() {
             />
           </label>
           <label className="grid gap-1">
-            <span className="text-sm font-medium text-gray-700">排序</span>
+            <span className="text-sm font-medium text-gray-700">排序（越小越靠前，建议 1、2、3…）</span>
             <input
               type="number"
               className="border rounded-lg px-3 py-2 text-sm outline-none focus:border-[#0E2745] focus:ring-2 focus:ring-[#0E2745]/15"
               value={draft.sort_order}
               onChange={(e) => setDraft((d) => ({ ...d, sort_order: Number(e.target.value) || 0 }))}
             />
-          </label>
-          <label className="flex items-center gap-2 pt-7">
-            <input
-              type="checkbox"
-              checked={draft.is_published}
-              onChange={(e) => setDraft((d) => ({ ...d, is_published: e.target.checked }))}
-            />
-            <span className="text-sm text-gray-700">已发布</span>
           </label>
         </div>
 

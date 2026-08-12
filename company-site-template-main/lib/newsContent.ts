@@ -36,7 +36,7 @@ export function defaultNewsArticles(): NewsArticle[] {
       content_en: n.content.en,
       image_url: n.image,
       published_at: null,
-      sort_order: (i + 1) * 10,
+      sort_order: i + 1,
       is_published: true,
     };
   });

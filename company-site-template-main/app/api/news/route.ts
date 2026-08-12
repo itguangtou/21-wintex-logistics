@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
         .order('sort_order', { ascending: false })
         .limit(1)
         .maybeSingle();
-      sort_order = (last?.sort_order ?? 0) + 10;
+      sort_order = (last?.sort_order ?? 0) + 1;
     }
 
     const id = parsed.data.id?.trim() || `n-${Date.now()}`;
@@ -114,7 +114,8 @@ export async function POST(req: NextRequest) {
       image_url: parsed.data.image_url,
       published_at: parsed.data.published_at || null,
       sort_order,
-      is_published: parsed.data.is_published ?? false,
+      // 有记录即前台可见；删除即消失，不再做草稿态
+      is_published: true,
     };
 
     const { data, error } = await supabase

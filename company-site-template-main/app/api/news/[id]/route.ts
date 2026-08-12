@@ -85,6 +85,8 @@ export async function PUT(req: NextRequest, ctx: RouteCtx) {
     for (const [k, v] of Object.entries(parsed.data)) {
       if (v !== undefined) patch[k] = v;
     }
+    // 有记录即前台可见
+    patch.is_published = true;
     if (Object.keys(patch).length === 0) {
       return noStoreJson({ error: '无更新字段' }, { status: 400 });
     }
@@ -107,7 +109,7 @@ export async function PUT(req: NextRequest, ctx: RouteCtx) {
             ? parsed.data.published_at
             : fallback?.published_at ?? null,
         sort_order: parsed.data.sort_order ?? fallback?.sort_order ?? 0,
-        is_published: parsed.data.is_published ?? fallback?.is_published ?? true,
+        is_published: true,
       };
       const { data, error } = await supabase
         .from('news')
