@@ -10,7 +10,8 @@ import { useAdminAuth } from './AdminAuthContext';
 import { useAdminMessage } from './AdminMessage';
 import type { NewsArticle } from '@/lib/newsContent';
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE_OPTIONS = [5, 10, 20, 50];
+const PAGE_SIZE_KEY = 'adminNewsPageSize';
 
 function formatUpdatedAt(iso?: string) {
   if (!iso) return '—';
@@ -20,6 +21,16 @@ function formatUpdatedAt(iso?: string) {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function readStoredPageSize(): number {
+  try {
+    const n = Number(localStorage.getItem(PAGE_SIZE_KEY));
+    if (PAGE_SIZE_OPTIONS.includes(n)) return n;
+  } catch {
+    /* ignore */
+  }
+  return 10;
+}
+
 export default function NewsListPage() {
   const router = useRouter();
   const { setSubtitle } = useAdminChrome();
@@ -27,9 +38,14 @@ export default function NewsListPage() {
   const message = useAdminMessage();
   const [keyword, setKeyword] = useState('');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [rows, setRows] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setPageSize(readStoredPageSize());
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -95,20 +111,29 @@ export default function NewsListPage() {
     );
   }, [rows, keyword]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const safePage = Math.min(page, totalPages);
   const pageRows = useMemo(() => {
-    const start = (safePage - 1) * PAGE_SIZE;
-    return filtered.slice(start, start + PAGE_SIZE);
-  }, [filtered, safePage]);
+    const start = (safePage - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, safePage, pageSize]);
 
   useEffect(() => {
     setPage(1);
-  }, [keyword]);
+  }, [keyword, pageSize]);
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
   }, [page, totalPages]);
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    try {
+      localStorage.setItem(PAGE_SIZE_KEY, String(size));
+    } catch {
+      /* ignore */
+    }
+  };
 
   const handleCreate = () => {
     router.push('/admin/news/new');
@@ -129,7 +154,6 @@ export default function NewsListPage() {
       }
       if (!res.ok) throw new Error(j?.error || '操作失败，请稍后重试');
       message.success('已删除');
-      // 先弹提示再刷新列表：避免某些情况下 load 触发重渲染后用户看不到 toast
       await load();
     } catch (e: unknown) {
       message.error(e instanceof Error ? e.message : '删除失败');
@@ -245,49 +269,62 @@ export default function NewsListPage() {
   ];
 
   return (
-    <div className="p-6 lg:p-8">
-      <SearchBar
-        keyword={keyword}
-        onKeywordChange={setKeyword}
-        onCreate={handleCreate}
-        createLabel="新建新闻"
-        showStatus={false}
-      />
-      {hasLocalDraft && (
-        <div className="mb-3 flex flex-wrap items-center gap-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-100 text-sm text-amber-900">
-          <span>有未发布的新建草稿</span>
-          <button
-            type="button"
-            className="text-[#0E2745] hover:underline font-medium"
-            onClick={() => router.push('/admin/news/new')}
-          >
-            继续编辑
-          </button>
-          <button type="button" className="text-red-600 hover:underline" onClick={discardLocalDraft}>
-            丢弃草稿
-          </button>
-        </div>
-      )}
+    <div className="box-border flex flex-col overflow-hidden px-6 lg:px-8 pt-6 lg:pt-8 pb-4 h-[calc(100dvh-8.5rem)] max-md:h-[calc(100dvh-11rem)]">
+      <div className="shrink-0">
+        <SearchBar
+          keyword={keyword}
+          onKeywordChange={setKeyword}
+          onCreate={handleCreate}
+          createLabel="新建新闻"
+          showStatus={false}
+        />
+        {hasLocalDraft && (
+          <div className="mb-3 flex flex-wrap items-center gap-3 px-3 py-2 rounded-lg bg-amber-50 border border-amber-100 text-sm text-amber-900">
+            <span>有未发布的新建草稿</span>
+            <button
+              type="button"
+              className="text-[#0E2745] hover:underline font-medium"
+              onClick={() => router.push('/admin/news/new')}
+            >
+              继续编辑
+            </button>
+            <button type="button" className="text-red-600 hover:underline" onClick={discardLocalDraft}>
+              丢弃草稿
+            </button>
+          </div>
+        )}
+      </div>
+
       {loading ? (
-        <div className="text-sm text-gray-500 py-8">加载中…</div>
+        <div className="flex-1 min-h-0 flex items-center justify-center text-sm text-gray-500">加载中…</div>
       ) : (
-        <>
-          <DataTable
-            columns={columns}
-            rows={pageRows}
-            rowKey={(row) => row.id}
-            onRowClick={(row) => router.push(`/admin/news/${row.id}`)}
-            emptyText="没有匹配的新闻"
-          />
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex-1 min-h-0 flex flex-col gap-3 mb-3">
+          <div className="flex-1 min-h-0">
+            <DataTable
+              fillHeight
+              columns={columns}
+              rows={pageRows}
+              rowKey={(row) => row.id}
+              onRowClick={(row) => router.push(`/admin/news/${row.id}`)}
+              emptyText="没有匹配的新闻"
+            />
+          </div>
+          <div className="shrink-0 flex flex-wrap items-center justify-between gap-3">
             <p className="text-xs text-gray-500">
               共 {filtered.length} 条
               {keyword ? `（已筛选，全库 ${rows.length}）` : ''}
               {filtered.length > 0 ? ` · 第 ${safePage}/${totalPages} 页` : ''}
             </p>
-            <AdminPagination page={safePage} totalPages={totalPages} onChange={setPage} />
+            <AdminPagination
+              page={safePage}
+              totalPages={totalPages}
+              onChange={setPage}
+              pageSize={pageSize}
+              pageSizeOptions={PAGE_SIZE_OPTIONS}
+              onPageSizeChange={handlePageSizeChange}
+            />
           </div>
-        </>
+        </div>
       )}
     </div>
   );

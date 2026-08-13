@@ -4,6 +4,9 @@ type Props = {
   page: number;
   totalPages: number;
   onChange: (page: number) => void;
+  pageSize?: number;
+  pageSizeOptions?: number[];
+  onPageSizeChange?: (size: number) => void;
 };
 
 function getVisiblePages(current: number, total: number): (number | 'ellipsis')[] {
@@ -23,10 +26,15 @@ function getVisiblePages(current: number, total: number): (number | 'ellipsis')[
   return pages;
 }
 
-export default function AdminPagination({ page, totalPages, onChange }: Props) {
-  if (totalPages <= 1) return null;
-
-  const pages = getVisiblePages(page, totalPages);
+export default function AdminPagination({
+  page,
+  totalPages,
+  onChange,
+  pageSize,
+  pageSizeOptions = [5, 10, 20, 50],
+  onPageSizeChange,
+}: Props) {
+  const pages = getVisiblePages(page, Math.max(1, totalPages));
   const prevDisabled = page <= 1;
   const nextDisabled = page >= totalPages;
 
@@ -36,40 +44,60 @@ export default function AdminPagination({ page, totalPages, onChange }: Props) {
     'inline-flex h-9 min-w-9 items-center justify-center rounded-md border border-[#0E2745] bg-[#0E2745] px-2.5 text-sm font-medium text-white';
 
   return (
-    <nav className="flex flex-wrap items-center justify-end gap-1.5" aria-label="列表分页">
-      <button
-        type="button"
-        className={btn}
-        disabled={prevDisabled}
-        onClick={() => onChange(page - 1)}
-      >
-        上一页
-      </button>
-
-      {pages.map((item, index) =>
-        item === 'ellipsis' ? (
-          <span key={`ellipsis-${index}`} className="px-1 text-gray-400" aria-hidden="true">
-            …
-          </span>
-        ) : item === page ? (
-          <span key={item} className={active} aria-current="page">
-            {item}
-          </span>
-        ) : (
-          <button key={item} type="button" className={btn} onClick={() => onChange(item)}>
-            {item}
-          </button>
-        )
+    <div className="flex flex-wrap items-center justify-end gap-3">
+      {onPageSizeChange && pageSize != null && (
+        <label className="flex items-center gap-2 text-xs text-gray-500">
+          <span>每页</span>
+          <select
+            className="h-9 rounded-md border border-gray-200 bg-white px-2 text-sm text-[#0E2745] outline-none focus:border-[#0E2745]"
+            value={pageSize}
+            onChange={(e) => onPageSizeChange(Number(e.target.value))}
+          >
+            {pageSizeOptions.map((n) => (
+              <option key={n} value={n}>
+                {n} 条
+              </option>
+            ))}
+          </select>
+        </label>
       )}
 
-      <button
-        type="button"
-        className={btn}
-        disabled={nextDisabled}
-        onClick={() => onChange(page + 1)}
-      >
-        下一页
-      </button>
-    </nav>
+      <nav className="flex flex-wrap items-center justify-end gap-1.5" aria-label="列表分页">
+        <button
+          type="button"
+          className={btn}
+          disabled={prevDisabled || totalPages <= 1}
+          onClick={() => onChange(page - 1)}
+        >
+          上一页
+        </button>
+
+        {totalPages > 1 &&
+          pages.map((item, index) =>
+            item === 'ellipsis' ? (
+              <span key={`ellipsis-${index}`} className="px-1 text-gray-400" aria-hidden="true">
+                …
+              </span>
+            ) : item === page ? (
+              <span key={item} className={active} aria-current="page">
+                {item}
+              </span>
+            ) : (
+              <button key={item} type="button" className={btn} onClick={() => onChange(item)}>
+                {item}
+              </button>
+            )
+          )}
+
+        <button
+          type="button"
+          className={btn}
+          disabled={nextDisabled || totalPages <= 1}
+          onClick={() => onChange(page + 1)}
+        >
+          下一页
+        </button>
+      </nav>
+    </div>
   );
 }
