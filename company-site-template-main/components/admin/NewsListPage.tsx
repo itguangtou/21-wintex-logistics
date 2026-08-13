@@ -4,10 +4,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import SearchBar from './SearchBar';
 import DataTable, { type DataTableColumn } from './DataTable';
+import AdminPagination from './AdminPagination';
 import { useAdminChrome } from './AdminChromeContext';
 import { useAdminAuth } from './AdminAuthContext';
 import { useAdminMessage } from './AdminMessage';
 import type { NewsArticle } from '@/lib/newsContent';
+
+const PAGE_SIZE = 10;
 
 function formatUpdatedAt(iso?: string) {
   if (!iso) return '—';
@@ -23,6 +26,7 @@ export default function NewsListPage() {
   const { logout } = useAdminAuth();
   const message = useAdminMessage();
   const [keyword, setKeyword] = useState('');
+  const [page, setPage] = useState(1);
   const [rows, setRows] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -90,6 +94,21 @@ export default function NewsListPage() {
         row.id.toLowerCase().includes(q)
     );
   }, [rows, keyword]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageRows = useMemo(() => {
+    const start = (safePage - 1) * PAGE_SIZE;
+    return filtered.slice(start, start + PAGE_SIZE);
+  }, [filtered, safePage]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [keyword]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
 
   const handleCreate = () => {
     router.push('/admin/news/new');
@@ -252,18 +271,24 @@ export default function NewsListPage() {
       {loading ? (
         <div className="text-sm text-gray-500 py-8">加载中…</div>
       ) : (
-        <DataTable
-          columns={columns}
-          rows={filtered}
-          rowKey={(row) => row.id}
-          onRowClick={(row) => router.push(`/admin/news/${row.id}`)}
-          emptyText="没有匹配的新闻"
-        />
+        <>
+          <DataTable
+            columns={columns}
+            rows={pageRows}
+            rowKey={(row) => row.id}
+            onRowClick={(row) => router.push(`/admin/news/${row.id}`)}
+            emptyText="没有匹配的新闻"
+          />
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <p className="text-xs text-gray-500">
+              共 {filtered.length} 条
+              {keyword ? `（已筛选，全库 ${rows.length}）` : ''}
+              {filtered.length > 0 ? ` · 第 ${safePage}/${totalPages} 页` : ''}
+            </p>
+            <AdminPagination page={safePage} totalPages={totalPages} onChange={setPage} />
+          </div>
+        </>
       )}
-      <p className="mt-3 text-xs text-gray-500">
-        共 {filtered.length} 条
-        {keyword ? `（已筛选，全库 ${rows.length}）` : ''}
-      </p>
     </div>
   );
 }
